@@ -201,6 +201,9 @@
                         <i class="fa-solid fa-chart-pie w-5 text-center"></i> Analítica y Márgenes
                     </button>
 
+                    <button onclick="router.cambiar('usuarios')" id="nav-usuarios" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
+                        <i class="fa-solid fa-user-shield w-5 text-center"></i> Usuarios y Permisos
+                    </button>
                     <div class="pt-3 px-3 py-1.5 text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">Soporte</div>
                     <button onclick="router.cambiar('problemas')" id="nav-problemas" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-screwdriver-wrench w-5 text-center"></i> Guía de Averías
@@ -335,13 +338,15 @@
                                     <span id="cart-total" class="text-amber-600">$0</span>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="posController.cobrar('Efectivo')" class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
-                                    <i class="fa-solid fa-money-bill-wave"></i> Efectivo
+                            <div class="pt-2 space-y-2">
+                                <label for="pos-mesa-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-stone-500">Enviar pedido a la mesa</label>
+                                <select id="pos-mesa-select" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-700">
+                                    <option value="">Selecciona una mesa</option>
+                                </select>
+                                <button onclick="posController.enviarPedido()" class="w-full cursor-pointer bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
+                                    <i class="fa-solid fa-paper-plane"></i> Enviar pedido · Dejar cuenta abierta
                                 </button>
-                                <button onclick="posController.cobrar('Tarjeta')" class="cursor-pointer bg-stone-900 hover:bg-stone-800 text-white font-bold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
-                                    <i class="fa-solid fa-credit-card"></i> Tarjeta
-                                </button>
+                                <p class="text-[10px] text-stone-400 text-center">No se cobra ahora. El pago se registra cuando el cliente termine.</p>
                             </div>
                         </div>
                     </div>
@@ -442,30 +447,23 @@
                 </section>
 
                 <!-- 7. VISTA CAJA Y ARQUEOS -->
+
                 <section id="view-caja" class="view-section hidden space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                            <span class="text-xs font-bold text-stone-400 uppercase">Fondo Inicial de Caja</span>
-                            <h3 class="text-2xl font-extrabold text-stone-900 mt-1">$150.00</h3>
-                        </div>
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                            <span class="text-xs font-bold text-stone-400 uppercase">Ventas Efectivo Turno</span>
-                            <h3 id="caja-efectivo-turno" class="text-2xl font-extrabold text-emerald-600 mt-1">$0</h3>
-                        </div>
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                            <span class="text-xs font-bold text-stone-400 uppercase">Ventas Tarjeta / Digital</span>
-                            <h3 id="caja-tarjeta-turno" class="text-2xl font-extrabold text-amber-600 mt-1">$0</h3>
-                        </div>
+                    <div class="rounded-2xl bg-stone-900 p-6 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div><p class="text-xs uppercase tracking-widest text-amber-300 font-bold">Control diario</p><h3 class="text-2xl font-black mt-1">Cierre de caja</h3><p class="text-sm text-stone-300 mt-1">Jornada del <span id="caja-fecha"></span> · La caja inicia un nuevo día a medianoche (hora Colombia).</p></div><div id="caja-estado-dia"></div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-stone-800">Realizar Arqueo de Caja Ciego</h4>
-                            <p class="text-xs text-stone-500">Cierre estricto para control de turno y prevención de mermas financieras.</p>
-                        </div>
-                        <button onclick="cajaController.abrirModal()" class="cursor-pointer bg-stone-900 hover:bg-stone-800 text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-xs flex items-center gap-2">
-                            <i class="fa-solid fa-calculator"></i> Iniciar Arqueo
-                        </button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Ventas del día</span><h3 id="caja-total-dia" class="text-2xl font-black mt-2">$0</h3><p id="caja-transacciones-dia" class="text-xs text-stone-500 mt-1">0 transacciones</p></div>
+                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Efectivo</span><h3 id="caja-efectivo-dia" class="text-2xl font-black text-emerald-700 mt-2">$0</h3></div>
+                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Tarjeta / digital</span><h3 id="caja-tarjeta-dia" class="text-2xl font-black text-amber-700 mt-2">$0</h3></div>
+                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Efectivo esperado</span><h3 id="caja-esperado-dia" class="text-2xl font-black mt-2">$0</h3><p class="text-xs text-stone-500 mt-1">Fondo inicial + ventas en efectivo</p></div>
                     </div>
+                    <div class="bg-white p-6 rounded-2xl border border-stone-200">
+                        <h4 class="font-bold text-stone-800">Apertura de caja</h4><p class="text-xs text-stone-500 mt-1">Registra el dinero base con el que comienza el día.</p>
+                        <div class="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end"><label class="text-xs font-bold text-stone-600 flex-1">Fondo inicial (COP)<input id="caja-fondo-input" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-3"></label><div class="text-xs text-stone-500">Fondo guardado: <b id="caja-fondo-dia">$0</b></div><button onclick="cajaController.guardarFondo()" class="rounded-xl bg-amber-700 px-5 py-3 text-xs font-bold text-white">Guardar fondo</button></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h4 class="font-bold text-stone-800">Finalizar jornada</h4><p class="text-xs text-stone-500 mt-1">Compara el efectivo esperado con el dinero contado y guarda la diferencia.</p></div><button id="caja-btn-cerrar" onclick="cajaController.abrirModal()" class="rounded-xl bg-stone-900 px-5 py-3 text-xs font-bold text-white"><i class="fa-solid fa-lock mr-2"></i>Cerrar caja del día</button></div>
+                    <div class="bg-white p-6 rounded-2xl border border-stone-200"><h4 class="font-bold text-stone-800 mb-2">Historial de cierres</h4><p class="text-xs text-stone-500 mb-3">Los días anteriores quedan guardados; el cierre automático de medianoche conserva las ventas aunque la página esté cerrada.</p><div id="caja-historial"></div></div>
                 </section>
 
                 <!-- 8. VISTA GESTIÓN DE PERSONAL -->
@@ -482,6 +480,13 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
                         <div id="personal-list" class="space-y-3"></div>
                     </div>
+                </section>
+
+
+                <section id="view-usuarios" class="view-section hidden space-y-6">
+                    <div class="rounded-2xl bg-stone-900 text-white p-6"><p class="text-xs uppercase tracking-widest text-amber-300 font-bold">Seguridad del equipo</p><h3 class="text-2xl font-black mt-1">Usuarios y permisos</h3><p class="text-sm text-stone-300 mt-2">El administrador controla qué pantallas puede abrir cada empleado. Los permisos operativos permiten tomar pedidos, cobrar, consultar mesas y ver el menú.</p></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold">Agregar empleado</h4><p class="text-xs text-stone-500 mt-1">Primero crea su cuenta de acceso en Supabase Authentication. Después registra aquí el mismo correo y selecciona sus permisos.</p><form onsubmit="accesoController.agregarEmpleado(event)" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"><input id="nuevo-empleado-email" type="email" required placeholder="correo@ejemplo.com" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-nombre" type="text" placeholder="Nombre del empleado" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><button class="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white">Agregar empleado</button></form></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold mb-1">Cuentas registradas</h4><p class="text-xs text-stone-500 mb-4">Los empleados solo pueden recibir permisos para las funciones operativas. Caja diaria, reportes, costos, personal y configuración quedan reservados al administrador.</p><div id="usuarios-lista" class="space-y-4"></div></div>
                 </section>
 
                 <!-- 9. VISTA CRM DE CLIENTES -->
@@ -570,11 +575,11 @@
     <!-- SCRIPT CENTRAL DE CONTROL -->
     <script>
 
-        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','kds','mermas','recetas','personal','crm','problemas','arqueos'];
+        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles'];
         const BRUMAS_STORAGE_KEYS = {
-          productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', kds:'cm_kds',
+          productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', pedidos:'cm_pedidos', kds:'cm_kds',
           mermas:'cm_mermas', recetas:'cm_recetas', personal:'cm_personal', crm:'cm_crm',
-          problemas:'cm_problemas', arqueos:'cm_arqueos'
+          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles'
         };
         const brumasSync = {
           client:null, user:null, channel:null, baseline:{}, queue:Promise.resolve(), ready:false,
@@ -660,13 +665,15 @@
             try {
               const active=document.querySelector('.view-section:not(.hidden)')?.id?.replace('view-','');
               if(active==='dashboard')dashboardController.init();
+              if(active==='kds')kdsController.render();
               if(active==='inventario')inventarioController.render();
-              if(active==='pos'){posController.renderCategorias();posController.renderGrid();}
+              if(active==='pos'){posController.renderCategorias();posController.renderGrid();posController.renderMesasSelector();}
               if(active==='mesas')mesasController.render();
               if(active==='personal')personalController.render();
               if(active==='crm')crmController.render();
               if(active==='mermas')mermasController.render();
               if(active==='caja')cajaController.init();
+              if(active==='usuarios')accesoController.render();
               if(active==='reportes'){reportesController.init();informeController.render();}
               if(active==='problemas')problemasController.init();
             } catch(e){console.warn('No se pudo refrescar la vista en vivo:',e);}
@@ -753,6 +760,7 @@
 
         const router = {
             cambiar(vistaId) {
+                if (typeof accesoController !== 'undefined' && !accesoController.puede(vistaId)) { alert('🔒 Esta sección está reservada para el administrador.'); return; }
                 document.querySelectorAll('.view-section').forEach(el => {
                     el.classList.add('hidden');
                     el.classList.remove('grid');
@@ -784,7 +792,8 @@
                     personal: 'Reloj Checador y Personal',
                     crm: 'Fidelización y Clientes (CRM)',
                     reportes: 'Analítica Financiera y Márgenes',
-                    problemas: 'Guía de Diagnóstico y Averías'
+                    problemas: 'Guía de Diagnóstico y Averías',
+                    usuarios: 'Usuarios y Permisos'
                 };
                 document.getElementById('view-title').innerText = titulos[vistaId] || 'Panel';
 
@@ -800,6 +809,8 @@
                 if(vistaId === 'crm') crmController.render();
                 if(vistaId === 'reportes') { reportesController.init(); informeController.render(); }
                 if(vistaId === 'problemas') problemasController.init();
+                if(vistaId === 'usuarios') accesoController.render();
+                if(vistaId === 'usuarios') accesoController.render();
             }
         };
 
@@ -887,7 +898,21 @@
                 this.renderCategorias();
                 this.renderGrid();
                 this.renderCarrito();
+                this.renderMesasSelector();
                 verificarStockBajoGlobal();
+            },
+            renderMesasSelector() {
+                const select = document.getElementById('pos-mesa-select');
+                if (!select) return;
+                const db = sistema.cargarDB();
+                const selected = select.value;
+                select.innerHTML = '<option value="">Selecciona una mesa</option>' +
+                    db.mesas.map(m => {
+                        const pedido = (db.pedidos || []).find(p => String(p.mesaId) === String(m.id) && p.estado === 'Abierta');
+                        const etiqueta = pedido ? `${m.numero} · Cuenta abierta` : `${m.numero} · ${m.estado || 'Libre'}`;
+                        return `<option value="${m.id}">${etiqueta}</option>`;
+                    }).join('');
+                if (selected && db.mesas.some(m => String(m.id) === selected)) select.value = selected;
             },
             renderCategorias() {
                 const db = sistema.cargarDB();
@@ -904,25 +929,20 @@
                 this.renderCategorias();
                 this.renderGrid();
             },
-            filtrar() {
-                this.renderGrid();
-            },
+            filtrar() { this.renderGrid(); },
             renderGrid() {
                 const db = sistema.cargarDB();
                 const query = document.getElementById('pos-search').value.toLowerCase();
                 const grid = document.getElementById('pos-grid');
-
                 const filtrados = db.productos.filter(p => {
                     const matchCat = categoriaFiltroActiva === 'Todos' || p.categoria === categoriaFiltroActiva;
                     const matchText = p.nombre.toLowerCase().includes(query);
                     return matchCat && matchText;
                 });
-
-                if(filtrados.length === 0) {
+                if (filtrados.length === 0) {
                     grid.innerHTML = '<div class="col-span-full text-center py-12 text-stone-400 text-xs">No se encontraron productos</div>';
                     return;
                 }
-
                 grid.innerHTML = filtrados.map(p => {
                     const stockBajo = p.stock < 10;
                     return `
@@ -945,13 +965,11 @@
             preAgregar(id) {
                 const db = sistema.cargarDB();
                 const prod = db.productos.find(p => p.id === id);
-                if(!prod || prod.stock <= 0) {
+                if (!prod || prod.stock <= 0) {
                     alert('Producto agotado o sin stock disponible.');
                     return;
                 }
-
-                // Si es bebida caliente o café, ofrecer modificadores (Idea aplicada)
-                if(prod.categoria === 'Bebidas Calientes') {
+                if (prod.categoria === 'Bebidas Calientes') {
                     abrirModalGeneral('Personalizar Bebida: ' + prod.nombre, `
                         <div class="space-y-4 text-xs">
                             <div>
@@ -984,12 +1002,12 @@
             agregarDirecto(id, extraNombre = '', extraPrecio = 0) {
                 const db = sistema.cargarDB();
                 const prod = db.productos.find(p => p.id === id);
+                if (!prod || prod.stock <= 0) { alert('Producto agotado o sin stock disponible.'); return; }
                 const nombreFinal = extraNombre ? `${prod.nombre} (${extraNombre})` : prod.nombre;
-                const precioFinal = prod.precio + extraPrecio;
-
+                const precioFinal = Number(prod.precio) + Number(extraPrecio);
                 const item = carritoActual.find(i => i.nombre === nombreFinal);
-                if(item) {
-                    if(item.cantidad < prod.stock) item.cantidad++;
+                if (item) {
+                    if (item.cantidad < prod.stock) item.cantidad++;
                     else alert('Stock máximo alcanzado.');
                 } else {
                     carritoActual.push({ id: prod.id, nombre: nombreFinal, precio: precioFinal, cantidad: 1, stock: prod.stock });
@@ -999,15 +1017,13 @@
             agregarConModificadores(id) {
                 const leche = document.getElementById('mod-leche').value;
                 const azucar = document.getElementById('mod-azucar').value;
-                let extraPrecio = 0;
-                if(leche.includes('Almendras') || leche.includes('Avena')) extraPrecio = 500;
-
+                const extraPrecio = (leche.includes('Almendras') || leche.includes('Avena')) ? 500 : 0;
                 cerrarModalGeneral();
                 this.agregarDirecto(id, `${leche}, ${azucar}`, extraPrecio);
             },
             renderCarrito() {
                 const container = document.getElementById('pos-cart-items');
-                if(carritoActual.length === 0) {
+                if (carritoActual.length === 0) {
                     container.innerHTML = `
                         <div class="text-center py-16 text-stone-400 text-xs">
                             <i class="fa-solid fa-basket-shopping text-3xl mb-2 block text-stone-300"></i>
@@ -1018,7 +1034,6 @@
                     document.getElementById('cart-total').innerText = formatoCOP(0);
                     return;
                 }
-
                 container.innerHTML = carritoActual.map((item, index) => `
                     <div class="flex justify-between items-center bg-stone-50 p-2.5 rounded-xl border border-stone-200/60">
                         <div class="pr-2">
@@ -1035,68 +1050,113 @@
                         </div>
                     </div>
                 `).join('');
-
                 const subtotal = carritoActual.reduce((acc, i) => acc + (i.precio * i.cantidad), 0);
                 const tax = subtotal * 0.19;
-                const total = subtotal + tax;
-
                 document.getElementById('cart-subtotal').innerText = formatoCOP(subtotal);
                 document.getElementById('cart-tax').innerText = formatoCOP(tax);
-                document.getElementById('cart-total').innerText = formatoCOP(total);
+                document.getElementById('cart-total').innerText = formatoCOP(subtotal + tax);
             },
             cambiarCantidad(index, delta) {
                 carritoActual[index].cantidad += delta;
-                if(carritoActual[index].cantidad <= 0) carritoActual.splice(index, 1);
+                if (carritoActual[index].cantidad <= 0) carritoActual.splice(index, 1);
                 this.renderCarrito();
             },
             limpiarCarrito() {
                 carritoActual = [];
                 this.renderCarrito();
             },
-            cobrar(metodo) {
-                if(carritoActual.length === 0) return;
+            enviarPedido() {
+                if (carritoActual.length === 0) { alert('Agrega productos antes de enviar el pedido.'); return; }
+                const select = document.getElementById('pos-mesa-select');
+                const mesaId = select.value;
+                if (!mesaId) { alert('Selecciona la mesa que realizará el pedido.'); select.focus(); return; }
                 const db = sistema.cargarDB();
-                const subtotal = carritoActual.reduce((acc, i) => acc + (i.precio * i.cantidad), 0);
-                const total = subtotal * 1.19;
+                db.pedidos = db.pedidos || [];
+                const mesa = db.mesas.find(m => String(m.id) === String(mesaId));
+                if (!mesa) { alert('No se encontró la mesa seleccionada.'); return; }
 
-                // Descuento automático de inventario (BOM aplicado)
+                // Validar y descontar inventario una sola vez, al enviar cada ronda de productos.
+                for (const item of carritoActual) {
+                    const producto = db.productos.find(p => String(p.id) === String(item.id));
+                    if (!producto || Number(producto.stock) < Number(item.cantidad)) {
+                        alert(`No hay inventario suficiente para ${item.nombre}. Disponible: ${producto ? producto.stock : 0}.`);
+                        return;
+                    }
+                }
                 carritoActual.forEach(item => {
-                    const p = db.productos.find(prod => prod.id === item.id);
-                    if(p) p.stock -= item.cantidad;
+                    const producto = db.productos.find(p => String(p.id) === String(item.id));
+                    if (producto) producto.stock = Number(producto.stock) - Number(item.cantidad);
                 });
 
-                const nuevaVenta = {
-                    id: 'V-' + Date.now().toString().slice(-6),
-                    fecha: new Date().toLocaleString(),
-                    items: [...carritoActual],
-                    total: total,
-                    metodoPago: metodo
-                };
+                let pedido = db.pedidos.find(p => String(p.mesaId) === String(mesa.id) && p.estado === 'Abierta');
+                const nuevosItems = carritoActual.map(i => ({ id: i.id, nombre: i.nombre, precio: Number(i.precio), cantidad: Number(i.cantidad) }));
+                if (pedido) {
+                    nuevosItems.forEach(nuevo => {
+                        const existente = pedido.items.find(i => i.nombre === nuevo.nombre && Number(i.precio) === nuevo.precio);
+                        if (existente) existente.cantidad += nuevo.cantidad;
+                        else pedido.items.push(nuevo);
+                    });
+                    pedido.actualizado = new Date().toLocaleString();
+                    pedido.subtotal = pedido.items.reduce((a, i) => a + i.precio * i.cantidad, 0);
+                    pedido.impuesto = pedido.subtotal * 0.19;
+                    pedido.total = pedido.subtotal + pedido.impuesto;
+                } else {
+                    const subtotal = nuevosItems.reduce((a, i) => a + i.precio * i.cantidad, 0);
+                    const impuesto = subtotal * 0.19;
+                    pedido = {
+                        id: 'P-' + Date.now(),
+                        mesaId: mesa.id,
+                        mesaNumero: mesa.numero,
+                        items: nuevosItems,
+                        subtotal,
+                        impuesto,
+                        total: subtotal + impuesto,
+                        fecha: new Date().toLocaleString(),
+                        actualizado: new Date().toLocaleString(),
+                        estado: 'Abierta'
+                    };
+                    db.pedidos.push(pedido);
+                }
 
-                db.ventas.push(nuevaVenta);
-                db.kds.push({id: Date.now(), mesa: 'Mostrador', items: carritoActual.map(i => `${i.nombre} (x${i.cantidad})`), estado: 'Pendiente', tiempo: 'Nuevo'});
+                mesa.estado = 'Ocupada';
+                db.kds.push({
+                    id: Date.now() + Math.floor(Math.random() * 1000),
+                    pedidoId: pedido.id,
+                    mesa: mesa.numero,
+                    items: carritoActual.map(i => `${i.nombre} (x${i.cantidad})`),
+                    estado: 'Pendiente',
+                    tiempo: 'Nuevo'
+                });
                 sistema.guardarDB(db);
-
-                alert('Venta cobrada con éxito vía ' + metodo + '.\nTotal: ' + formatoCOP(total) + '\nStock descontado automáticamente.');
+                alert(`Pedido enviado a ${mesa.numero}.\\nTotal acumulado: ${formatoCOP(pedido.total)}\\nLa cuenta queda abierta; todavía no se ha cobrado.`);
                 this.limpiarCarrito();
                 this.renderGrid();
+                this.renderMesasSelector();
+                if (document.getElementById('view-mesas') && !document.getElementById('view-mesas').classList.contains('hidden')) mesasController.render();
             }
         };
 
         const mesasController = {
+            pedidoAbierto(db, mesaId) {
+                return (db.pedidos || []).find(p => String(p.mesaId) === String(mesaId) && p.estado === 'Abierta');
+            },
             render() {
                 const db = sistema.cargarDB();
+                db.pedidos = db.pedidos || [];
                 const grid = document.getElementById('mesas-grid');
                 grid.innerHTML = db.mesas.map(m => {
-                    const estado = m.estado;
+                    const pedido = this.pedidoAbierto(db, m.id);
+                    const estado = pedido ? 'Ocupada' : (m.estado || 'Libre');
                     let colorClase = 'bg-emerald-50 border-emerald-200 text-emerald-800';
                     let dotClase = 'bg-emerald-500';
-                    if(estado === 'Ocupada') { colorClase = 'bg-red-50 border-red-200 text-red-800'; dotClase = 'bg-red-500 alert-pulse'; }
-                    if(estado === 'Esperando pedido') { colorClase = 'bg-amber-50 border-amber-200 text-amber-800'; dotClase = 'bg-amber-500 alert-pulse'; }
-                    if(estado === 'Cuenta pedida') { colorClase = 'bg-blue-50 border-blue-200 text-blue-800'; dotClase = 'bg-blue-500'; }
-
+                    if (estado === 'Ocupada') { colorClase = 'bg-red-50 border-red-200 text-red-800'; dotClase = 'bg-red-500 alert-pulse'; }
+                    if (estado === 'Esperando pedido') { colorClase = 'bg-amber-50 border-amber-200 text-amber-800'; dotClase = 'bg-amber-500 alert-pulse'; }
+                    if (estado === 'Cuenta pedida') { colorClase = 'bg-blue-50 border-blue-200 text-blue-800'; dotClase = 'bg-blue-500'; }
+                    const resumen = pedido
+                        ? `<div class="mt-2 pt-2 border-t border-current/20 text-[11px] font-bold"><div>${pedido.items.reduce((a,i)=>a+i.cantidad,0)} productos en cuenta</div><div class="text-sm mt-1">${formatoCOP(pedido.total)}</div><div class="text-[9px] font-semibold opacity-70">Toca para ver y cobrar</div></div>`
+                        : `<div class="mt-2 text-[10px] opacity-70">Toca para ver la mesa</div>`;
                     return `
-                        <div onclick="mesasController.cambiarEstado(${m.id})" class="cursor-pointer p-5 rounded-2xl border transition flex flex-col justify-between shadow-xs ${colorClase} hover:shadow-md">
+                        <div onclick="mesasController.verCuenta(${m.id})" class="cursor-pointer p-5 rounded-2xl border transition flex flex-col justify-between shadow-xs ${colorClase} hover:shadow-md">
                             <div class="flex justify-between items-center">
                                 <span class="text-[10px] font-extrabold uppercase tracking-wider">${m.zona}</span>
                                 <span class="w-3 h-3 rounded-full ${dotClase}"></span>
@@ -1104,64 +1164,89 @@
                             <div class="my-3">
                                 <h4 class="font-extrabold text-base">${m.numero}</h4>
                                 <span class="text-xs font-bold mt-1 block">Estado: ${estado}</span>
+                                ${resumen}
                             </div>
                         </div>
                     `;
                 }).join('');
             },
-            cambiarEstado(id) {
-                let db = sistema.cargarDB();
-                const mesa = db.mesas.find(m => m.id === id);
-                if(mesa) {
-                    const estados = ['Libre', 'Ocupada', 'Esperando pedido', 'Cuenta pedida'];
-                    const nextIdx = (estados.indexOf(mesa.estado) + 1) % estados.length;
-                    mesa.estado = estados[nextIdx];
-                    sistema.guardarDB(db);
-                    this.render();
+            verCuenta(mesaId) {
+                const db = sistema.cargarDB();
+                const mesa = db.mesas.find(m => String(m.id) === String(mesaId));
+                const pedido = this.pedidoAbierto(db, mesaId);
+                if (!mesa) return;
+                if (!pedido) {
+                    abrirModalGeneral(`${mesa.numero} · ${mesa.estado || 'Libre'}`, `
+                        <div class="space-y-3 text-sm">
+                            <p class="text-stone-600">Esta mesa no tiene una cuenta abierta.</p>
+                            <p class="text-xs text-stone-500">Para iniciar un consumo, crea el pedido desde Caja digital y selecciona esta mesa.</p>
+                            <div class="flex justify-end">
+                                <button onclick="cerrarModalGeneral()" class="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-bold">Cerrar</button>
+                            </div>
+                        </div>
+                    `);
+                    return;
                 }
+                const filas = pedido.items.map(i => `
+                    <div class="flex justify-between gap-3 py-2 border-b border-stone-100 text-xs">
+                        <div><b>${i.nombre}</b><div class="text-stone-500">${i.cantidad} × ${formatoCOP(i.precio)}</div></div>
+                        <b class="whitespace-nowrap">${formatoCOP(i.precio * i.cantidad)}</b>
+                    </div>
+                `).join('');
+                abrirModalGeneral(`Cuenta abierta · ${mesa.numero}`, `
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-xs text-stone-500"><span>Pedido creado</span><span>${pedido.fecha || ''}</span></div>
+                        <div class="max-h-64 overflow-y-auto">${filas}</div>
+                        <div class="border-t pt-3 space-y-1 text-xs">
+                            <div class="flex justify-between text-stone-500"><span>Subtotal</span><b>${formatoCOP(pedido.subtotal)}</b></div>
+                            <div class="flex justify-between text-stone-500"><span>IVA (19%)</span><b>${formatoCOP(pedido.impuesto)}</b></div>
+                            <div class="flex justify-between text-base font-black pt-2"><span>Total por pagar</span><span class="text-amber-700">${formatoCOP(pedido.total)}</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Efectivo')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-money-bill-wave mr-1"></i> Cobrar efectivo</button>
+                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Tarjeta')" class="bg-stone-900 hover:bg-stone-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-credit-card mr-1"></i> Cobrar tarjeta</button>
+                        </div>
+                        <p class="text-[10px] text-stone-400 text-center">La mesa se liberará automáticamente al registrar el pago.</p>
+                    </div>
+                `);
+            },
+            cobrarPedido(pedidoId, metodo) {
+                const db = sistema.cargarDB();
+                const pedido = (db.pedidos || []).find(p => String(p.id) === String(pedidoId) && p.estado === 'Abierta');
+                if (!pedido) { alert('Esta cuenta ya fue cerrada o no existe.'); cerrarModalGeneral(); return; }
+                const mesa = db.mesas.find(m => String(m.id) === String(pedido.mesaId));
+                const venta = {
+                    id: 'V-' + Date.now().toString().slice(-6),
+                    fecha: new Date().toLocaleString(),
+                    items: pedido.items.map(i => ({ ...i })),
+                    total: Number(pedido.total),
+                    metodoPago: metodo,
+                    mesa: pedido.mesaNumero,
+                    pedidoId: pedido.id
+                };
+                db.ventas.push(venta);
+                pedido.estado = 'Pagada';
+                pedido.metodoPago = metodo;
+                pedido.fechaPago = new Date().toLocaleString();
+                if (mesa) mesa.estado = 'Libre';
+                sistema.guardarDB(db);
+                cerrarModalGeneral();
+                this.render();
+                posController.renderMesasSelector();
+                alert(`Cuenta de ${pedido.mesaNumero} cobrada por ${formatoCOP(venta.total)} vía ${metodo}.`);
+            },
+            cambiarEstado(id) {
+                this.verCuenta(id);
             },
             agregarMesa() {
-                let db = sistema.cargarDB();
+                const db = sistema.cargarDB();
                 const num = prompt('Número y nombre de la mesa (Ej: Mesa 05 - Terraza):');
-                if(num && num.trim() !== '') {
+                if (num && num.trim() !== '') {
                     db.mesas.push({ id: Date.now(), numero: num.trim(), estado: 'Libre', zona: 'Salón Principal' });
                     sistema.guardarDB(db);
                     this.render();
+                    posController.renderMesasSelector();
                 }
-            }
-        };
-
-        const kdsController = {
-            render() {
-                const db = sistema.cargarDB();
-                const grid = document.getElementById('kds-grid');
-                if(db.kds.length === 0) {
-                    grid.innerHTML = '<div class="col-span-full text-center py-12 text-stone-400 text-xs bg-white rounded-2xl border">No hay comandas activas en este momento.</div>';
-                    return;
-                }
-                grid.innerHTML = db.kds.map(k => `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                                <h4 class="font-bold text-xs text-stone-900"><i class="fa-solid fa-chair mr-1 text-amber-600"></i> ${k.mesa}</h4>
-                                <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">${k.tiempo}</span>
-                            </div>
-                            <ul class="space-y-1 text-xs text-stone-600">
-                                ${k.items.map(i => `<li class="flex items-center gap-2"><i class="fa-solid fa-circle-dot text-[8px] text-amber-600"></i> ${i}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="mt-4 pt-3 border-t flex justify-between items-center">
-                            <span class="text-[10px] font-bold text-stone-500 uppercase">${k.estado}</span>
-                            <button onclick="kdsController.completar(${k.id})" class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Marcar Listo</button>
-                        </div>
-                    </div>
-                `).join('');
-            },
-            completar(id) {
-                let db = sistema.cargarDB();
-                db.kds = db.kds.filter(k => k.id !== id);
-                sistema.guardarDB(db);
-                this.render();
             }
         };
 
@@ -1174,11 +1259,10 @@
                         <td class="p-4 font-bold text-stone-800">${p.nombre}</td>
                         <td class="p-4"><span class="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg text-xs font-semibold">${p.categoria}</span></td>
                         <td class="p-4 font-bold text-amber-600">${formatoCOP(p.precio)}</td>
-                        <td class="p-4 text-stone-500">${formatoCOP(p.costo)}</td>
+                        <td class="p-4 text-stone-500">${accesoController.esAdmin() ? formatoCOP(p.costo) : 'Reservado'}</td>
                         <td class="p-4"><span class="px-2.5 py-1 rounded-md text-xs font-bold ${p.stock < 10 ? 'bg-red-100 text-red-700 alert-pulse' : 'bg-emerald-100 text-emerald-700'}">${p.stock} unids.</span></td>
                         <td class="p-4 text-center">
-                            <button onclick="productController.editar(${p.id})" title="Editar producto" class="cursor-pointer text-amber-600 p-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="productController.eliminar(${p.id})" title="Eliminar producto" class="cursor-pointer text-stone-400 hover:text-red-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+                            ${accesoController.esAdmin() ? `<button onclick="productController.editar(${p.id})" title="Editar producto" class="cursor-pointer text-amber-600 p-1"><i class="fa-solid fa-pen"></i></button><button onclick="productController.eliminar(${p.id})" title="Eliminar producto" class="cursor-pointer text-stone-400 hover:text-red-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>` : `<span class="text-[10px] text-stone-400 font-bold">Solo lectura</span>`}
                         </td>
                     </tr>
                 `).join('');
@@ -1366,42 +1450,136 @@
             }
         };
 
+
+        function fechaBogotaISO(fecha = new Date()) {
+            const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(fecha);
+            const get = t => parts.find(p => p.type === t)?.value || '';
+            return `${get('year')}-${get('month')}-${get('day')}`;
+        }
+        function resumenVentasFecha(db, fecha) {
+            const ventas = (db.ventas || []).filter(v => fechaISORegistro(v.fecha) === fecha);
+            const efectivo = ventas.filter(v => v.metodoPago === 'Efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
+            const tarjeta = ventas.filter(v => v.metodoPago !== 'Efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
+            return { ventas, efectivo, tarjeta, total: efectivo + tarjeta };
+        }
         const cajaController = {
-            init() {
-                const db = sistema.cargarDB();
-                const efectivo = db.ventas.filter(v => v.metodoPago === 'Efectivo').reduce((acc, v) => acc + v.total, 0);
-                const tarjeta = db.ventas.filter(v => v.metodoPago === 'Tarjeta').reduce((acc, v) => acc + v.total, 0);
-                document.getElementById('caja-efectivo-turno').innerText = formatoCOP(efectivo);
-                document.getElementById('caja-tarjeta-turno').innerText = formatoCOP(tarjeta);
+            fechaActual: fechaBogotaISO(),
+            obtenerDia(db, fecha) {
+                db.cierresCaja = db.cierresCaja || [];
+                let dia = db.cierresCaja.find(x => String(x.id) === fecha);
+                if (!dia) { dia = { id: fecha, fecha, fondoInicial: 0, estado: 'Abierta', creadoEn: new Date().toISOString() }; db.cierresCaja.push(dia); }
+                return dia;
+            },
+            asegurarDiaActual() {
+                const db = sistema.cargarDB(), hoy = fechaBogotaISO();
+                this.procesarCierresPendientes(db, hoy);
+                this.obtenerDia(db, hoy);
+                sistema.guardarDB(db); this.fechaActual = hoy;
+            },
+            procesarCierresPendientes(db, hoy) {
+                db.cierresCaja = db.cierresCaja || [];
+                const fechasConVentas = [...new Set((db.ventas || []).map(v => fechaISORegistro(v.fecha)).filter(f => f && f < hoy))];
+                const fechasAbiertas = db.cierresCaja.filter(d => d.estado !== 'Cerrada' && d.fecha < hoy).map(d => d.fecha);
+                [...new Set([...fechasConVentas, ...fechasAbiertas])].sort().forEach(fecha => {
+                    const dia = this.obtenerDia(db, fecha);
+                    if (dia.estado !== 'Cerrada') this.finalizarEnDatos(db, dia, 'Automático por cambio de día', null, 'Cierre automático de medianoche');
+                });
+            },
+            finalizarEnDatos(db, dia, tipo, contado, observaciones) {
+                const r = resumenVentasFecha(db, dia.fecha), fondo = Number(dia.fondoInicial || 0), esperado = fondo + r.efectivo;
+                Object.assign(dia, {
+                    estado: 'Cerrada', cierreTipo: tipo, cerradoEn: new Date().toISOString(),
+                    ventasTotal: r.total, ventasEfectivo: r.efectivo, ventasTarjeta: r.tarjeta,
+                    transacciones: r.ventas.length, efectivoEsperado: esperado,
+                    efectivoContado: contado === null ? null : Number(contado),
+                    diferencia: contado === null ? null : Number(contado) - esperado,
+                    observaciones: observaciones || ''
+                });
+            },
+            verificarMedianoche() {
+                const hoy = fechaBogotaISO();
+                if (hoy !== this.fechaActual) {
+                    const db = sistema.cargarDB();
+                    this.procesarCierresPendientes(db, hoy); this.obtenerDia(db, hoy);
+                    sistema.guardarDB(db); this.fechaActual = hoy; this.init();
+                }
+            },
+            init() { if (!accesoController.esAdmin()) return; this.asegurarDiaActual(); this.render(); },
+            render() {
+                const db = sistema.cargarDB(), hoy = fechaBogotaISO(), dia = this.obtenerDia(db, hoy), r = resumenVentasFecha(db, hoy);
+                const fondo = Number(dia.fondoInicial || 0), esperado = fondo + r.efectivo;
+                const valores = {
+                    'caja-fecha': hoy, 'caja-total-dia': formatoCOP(r.total), 'caja-efectivo-dia': formatoCOP(r.efectivo),
+                    'caja-tarjeta-dia': formatoCOP(r.tarjeta), 'caja-transacciones-dia': `${r.ventas.length} transacciones`,
+                    'caja-fondo-dia': formatoCOP(fondo), 'caja-esperado-dia': formatoCOP(esperado)
+                };
+                Object.entries(valores).forEach(([id,v]) => { const el=document.getElementById(id); if(el) el.textContent=v; });
+                const input=document.getElementById('caja-fondo-input'); if(input && document.activeElement!==input) input.value=fondo;
+                const estado=document.getElementById('caja-estado-dia');
+                if(estado) estado.innerHTML=dia.estado==='Cerrada'
+                    ? '<span class="text-red-700 bg-red-100 px-3 py-1 rounded-full text-xs font-bold">Día cerrado</span>'
+                    : '<span class="text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full text-xs font-bold">Caja abierta</span>';
+                const boton=document.getElementById('caja-btn-cerrar');
+                if(boton){boton.disabled=dia.estado==='Cerrada';boton.classList.toggle('opacity-40',boton.disabled);}
+                const history=document.getElementById('caja-historial');
+                if(history){
+                    const cierres=[...(db.cierresCaja||[])].filter(x=>x.estado==='Cerrada').sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,15);
+                    history.innerHTML=cierres.length?cierres.map(x=>`
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 items-center border-b border-stone-100 py-3 text-xs">
+                            <strong>${x.fecha}</strong><span>${formatoCOP(x.ventasTotal||0)} ventas</span>
+                            <span>Efectivo: ${formatoCOP(x.ventasEfectivo||0)}</span><span>Tarjeta: ${formatoCOP(x.ventasTarjeta||0)}</span>
+                            <span class="${x.diferencia===null?'text-stone-500':(Number(x.diferencia)===0?'text-emerald-700':'text-red-700')} font-bold">${x.diferencia===null?'Auto · sin conteo':'Diferencia: '+formatoCOP(x.diferencia)}</span>
+                        </div>`).join(''):'<p class="text-xs text-stone-400">Todavía no hay cierres guardados.</p>';
+                }
+            },
+            guardarFondo() {
+                if(!accesoController.requireAdmin()) return;
+                const valor=Number(document.getElementById('caja-fondo-input')?.value);
+                if(!Number.isFinite(valor)||valor<0){alert('Ingresa un fondo inicial válido.');return;}
+                const db=sistema.cargarDB(),dia=this.obtenerDia(db,fechaBogotaISO());
+                if(dia.estado==='Cerrada'){alert('La caja de hoy ya está cerrada.');return;}
+                dia.fondoInicial=valor;sistema.guardarDB(db);this.render();alert('Fondo inicial guardado.');
             },
             abrirModal() {
-                abrirModalGeneral('Arqueo de Caja Ciego', `
-                    <form onsubmit="cajaController.guardarArqueo(event)" class="space-y-3.5 text-xs">
-                        <div>
-                            <label class="block font-bold text-stone-500 uppercase mb-1">Efectivo total contado en gaveta (COP)</label>
-                            <input type="number" step="1" id="form-arqueo-monto" required placeholder="0" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
+                if(!accesoController.requireAdmin()) return;
+                const db=sistema.cargarDB(),hoy=fechaBogotaISO(),dia=this.obtenerDia(db,hoy);
+                if(dia.estado==='Cerrada'){alert('La caja de hoy ya fue cerrada.');return;}
+                const abiertas=(db.pedidos||[]).filter(p=>p.estado==='Abierta');
+                if(abiertas.length){alert(`No se puede cerrar la caja mientras haya ${abiertas.length} cuenta(s) de mesa abierta(s). Cobra o resuelve esas cuentas primero.`);return;}
+                const r=resumenVentasFecha(db,hoy),esperado=Number(dia.fondoInicial||0)+r.efectivo;
+                abrirModalGeneral('Cierre de caja · '+hoy,`
+                    <div class="space-y-3 text-sm">
+                        <div class="rounded-xl bg-stone-50 p-4 space-y-2">
+                            <div class="flex justify-between"><span>Ventas del día</span><b>${formatoCOP(r.total)}</b></div>
+                            <div class="flex justify-between"><span>Ventas en efectivo</span><b>${formatoCOP(r.efectivo)}</b></div>
+                            <div class="flex justify-between"><span>Ventas con tarjeta / digital</span><b>${formatoCOP(r.tarjeta)}</b></div>
+                            <div class="flex justify-between"><span>Fondo inicial</span><b>${formatoCOP(dia.fondoInicial||0)}</b></div>
+                            <div class="flex justify-between border-t pt-2 text-emerald-800"><span class="font-bold">Efectivo esperado en caja</span><b>${formatoCOP(esperado)}</b></div>
                         </div>
-                        <div>
-                            <label class="block font-bold text-stone-500 uppercase mb-1">Observaciones del Turno / Comentarios</label>
-                            <textarea id="form-arqueo-obs" rows="2" placeholder="Sin novedad o diferencia..." class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
-                        </div>
-                        <div class="flex justify-end gap-2 pt-3 border-t">
-                            <button type="button" onclick="cerrarModalGeneral()" class="cursor-pointer px-4 py-2 text-stone-600 hover:bg-stone-100 rounded-xl font-bold">Cancelar</button>
-                            <button type="submit" class="cursor-pointer px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl font-bold shadow-xs">Finalizar y Registrar Arqueo</button>
-                        </div>
-                    </form>
-                `);
+                        <form onsubmit="cajaController.confirmarCierre(event)" class="space-y-3">
+                            <label class="block text-xs font-bold text-stone-600">Dinero contado físicamente (COP)
+                                <input id="caja-contado-input" type="number" min="0" step="1" required class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-3 text-base" placeholder="Escribe el total contado">
+                            </label>
+                            <label class="block text-xs font-bold text-stone-600">Observaciones
+                                <textarea id="caja-cierre-obs" rows="2" class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-2" placeholder="Novedades o explicación de diferencias"></textarea>
+                            </label>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="cerrarModalGeneral()" class="rounded-xl border px-4 py-2 font-bold">Cancelar</button>
+                                <button type="submit" class="rounded-xl bg-stone-900 px-4 py-2 font-bold text-white">Confirmar cierre</button>
+                            </div>
+                        </form>
+                    </div>`);
             },
-            guardarArqueo(e) {
-                e.preventDefault();
-                const monto = parseFloat(document.getElementById('form-arqueo-monto').value);
-                if(!isNaN(monto)) {
-                    const db=sistema.cargarDB(); db.arqueos=db.arqueos||[];
-                    db.arqueos.push({id:Date.now(),fecha:new Date().toLocaleString(),efectivo:monto,observaciones:document.getElementById('form-arqueo-obs').value});
-                    sistema.guardarDB(db);
-                    cerrarModalGeneral();
-                    alert('Arqueo registrado. Efectivo declarado: ' + formatoCOP(monto));
-                }
+            confirmarCierre(e) {
+                e.preventDefault();if(!accesoController.requireAdmin())return;
+                const contado=Number(document.getElementById('caja-contado-input').value),obs=document.getElementById('caja-cierre-obs').value.trim();
+                if(!Number.isFinite(contado)||contado<0){alert('El valor contado no es válido.');return;}
+                const db=sistema.cargarDB(),hoy=fechaBogotaISO(),dia=this.obtenerDia(db,hoy);
+                if(dia.estado==='Cerrada'){alert('La caja ya fue cerrada.');cerrarModalGeneral();return;}
+                if((db.pedidos||[]).some(p=>p.estado==='Abierta')){alert('Hay cuentas de mesa pendientes.');return;}
+                this.finalizarEnDatos(db,dia,'Cierre manual',contado,obs);
+                sistema.guardarDB(db);cerrarModalGeneral();this.render();
+                alert(`Cierre guardado.\\nEfectivo esperado: ${formatoCOP(dia.efectivoEsperado)}\\nEfectivo contado: ${formatoCOP(dia.efectivoContado)}\\nDiferencia: ${formatoCOP(dia.diferencia)}\\n\\nEl historial de ventas se conserva.`);
             }
         };
 
@@ -1677,6 +1855,87 @@
         };
 
 
+
+        const accesoController = {
+            actual: null,
+            permisosEmpleadoBase: ['pos','mesas','kds','productos'],
+            esAdmin() { return this.actual?.rol === 'admin'; },
+            puede(vista) { return this.esAdmin() || (this.actual?.permisos || this.permisosEmpleadoBase).includes(vista); },
+            requireAdmin() { if(this.esAdmin()) return true; alert('🔒 Esta acción solo está disponible para el administrador.'); return false; },
+            iniciar(user) {
+                const email=String(user.email||'').trim().toLowerCase(),db=sistema.cargarDB();
+                db.perfiles=db.perfiles||[];
+                let perfil=db.perfiles.find(p=>String(p.email||'').toLowerCase()===email);
+                if(!perfil){
+                    const primerUsuario=db.perfiles.length===0;
+                    perfil={id:email,email,nombre:user.user_metadata?.full_name||email.split('@')[0]||'Usuario',
+                        rol:primerUsuario?'admin':'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()};
+                    db.perfiles.push(perfil);sistema.guardarDB(db);
+                    if(primerUsuario) alert('Este es el primer usuario registrado: se ha asignado el perfil de administrador.');
+                }
+                this.actual=perfil;this.aplicar();
+                const badge=document.getElementById('brumas-user-email');
+                if(badge)badge.textContent=`${email} · ${perfil.rol==='admin'?'Administrador':'Empleado'}`;
+            },
+            aplicar() {
+                document.querySelectorAll('#brumas-sidebar .nav-btn').forEach(btn=>{
+                    const vista=btn.id.replace('nav-',''),permitido=this.puede(vista);
+                    btn.dataset.originalHtml=btn.dataset.originalHtml||btn.innerHTML;
+                    btn.innerHTML=btn.dataset.originalHtml+(permitido?'':' <i class="fa-solid fa-lock ml-auto text-amber-400" title="Solo administrador"></i>');
+                    btn.classList.toggle('opacity-50',!permitido);btn.classList.toggle('cursor-not-allowed',!permitido);
+                    btn.title=permitido?'':'Bloqueado: requiere permisos de administrador';
+                });
+            },
+            render() {
+                if(!this.requireAdmin())return;
+                const db=sistema.cargarDB(),cont=document.getElementById('usuarios-lista');if(!cont)return;
+                const empleados=(db.perfiles||[]).filter(p=>p.rol!=='admin');
+                const opciones=[['pos','Tomar pedidos y cobrar'],['mesas','Ver mesas y cuentas'],['kds','Ver comandera de cocina'],['productos','Consultar menú e inventario']];
+                cont.innerHTML=`<div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3"><b>Administrador:</b> ${this.actual?.email||''} · acceso completo</div>`+
+                    (empleados.length?empleados.map(p=>{
+                        const token=encodeURIComponent(p.email);
+                        const checks=opciones.map(([key,label])=>`<label class="flex items-center gap-2 text-xs text-stone-600"><input type="checkbox" ${(p.permisos||this.permisosEmpleadoBase).includes(key)?'checked':''} onchange="accesoController.cambiarPermiso('${token}','${key}',this.checked)"> ${label}</label>`).join('');
+                        const nombre=String(p.nombre||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                        return `<div class="rounded-xl border border-stone-200 p-4"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><b class="text-sm">${nombre}</b><p class="text-xs text-stone-500">${p.email}</p></div><button onclick="accesoController.eliminarEmpleado('${token}')" class="text-xs text-red-600 font-bold">Quitar acceso</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${checks}</div></div>`;
+                    }).join(''):'<p class="text-xs text-stone-400">Aún no hay empleados agregados.</p>');
+            },
+            agregarEmpleado(e) {
+                e.preventDefault();if(!this.requireAdmin())return;
+                const email=document.getElementById('nuevo-empleado-email').value.trim().toLowerCase();
+                const nombre=document.getElementById('nuevo-empleado-nombre').value.trim()||email.split('@')[0];
+                if(!email||!email.includes('@')){alert('Escribe un correo válido.');return;}
+                const db=sistema.cargarDB();db.perfiles=db.perfiles||[];
+                if(db.perfiles.some(p=>String(p.email).toLowerCase()===email)){alert('Ese correo ya está registrado.');return;}
+                db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()});
+                sistema.guardarDB(db);e.target.reset();this.render();
+                alert('Empleado agregado. Debe tener una cuenta creada en Supabase Authentication con este mismo correo para poder ingresar.');
+            },
+            cambiarPermiso(token,permiso,habilitado) {
+                if(!this.requireAdmin())return;
+                const email=decodeURIComponent(token),db=sistema.cargarDB(),p=(db.perfiles||[]).find(x=>String(x.email).toLowerCase()===email);
+                if(!p||p.rol==='admin')return;
+                p.permisos=p.permisos||[];
+                p.permisos=habilitado?[...new Set([...p.permisos,permiso])]:p.permisos.filter(x=>x!==permiso);
+                sistema.guardarDB(db);this.render();
+            },
+            eliminarEmpleado(token) {
+                if(!this.requireAdmin())return;
+                const email=decodeURIComponent(token);
+                if(!confirm(`¿Quitar el acceso de ${email} a Brumas Café?`))return;
+                const db=sistema.cargarDB();db.perfiles=(db.perfiles||[]).filter(p=>String(p.email).toLowerCase()!==email||p.rol==='admin');
+                sistema.guardarDB(db);this.render();
+            }
+        };
+        function protegerAccionesProducto() {
+            ['abrirModal','guardar','editar','eliminar'].forEach(metodo=>{
+                if(typeof productController!=='undefined'&&typeof productController[metodo]==='function'&&!productController[metodo].__protegido){
+                    const original=productController[metodo];
+                    const protegido=function(...args){if(!accesoController.requireAdmin())return;return original.apply(this,args);};
+                    protegido.__protegido=true;productController[metodo]=protegido;
+                }
+            });
+        }
+
         const BRUMAS_SUPABASE_URL='https://frkhmdbudrxyafxptvte.supabase.co';
         const BRUMAS_SUPABASE_ANON_KEY='sb_publishable_mcnoEBFLqpmsUYguU_KTXg_4_af-xDf';
         async function iniciarBrumasNube(){
@@ -1693,10 +1952,14 @@
           async function entrar(user){
             try{
               document.getElementById('brumas-auth-screen').classList.add('hidden');
-              document.getElementById('app').classList.remove('hidden');
+              document.getElementById('app').classList.add('hidden');
               brumasSync.status('Cargando datos...');
               await brumasSync.start(user);
+              accesoController.iniciar(user);
+              protegerAccionesProducto();
+              document.getElementById('app').classList.remove('hidden');
               dashboardController.init();verificarStockBajoGlobal();
+              cajaController.asegurarDiaActual();
               const dateInput=document.getElementById('report-date');
               if(dateInput&&!dateInput.value){dateInput.value=new Date().toISOString().slice(0,10);dateInput.addEventListener('change',()=>informeController.render());}
               const email=document.getElementById('brumas-user-email');if(email)email.textContent=user.email||'Usuario';
@@ -1725,11 +1988,13 @@
             if(event==='SIGNED_OUT'){
               document.getElementById('app').classList.add('hidden');
               document.getElementById('brumas-auth-screen').classList.remove('hidden');
-              brumasSync.ready=false;brumasSync.user=null;
+              brumasSync.ready=false;brumasSync.user=null;accesoController.actual=null;
             }
           });
         }
 
+
+        setInterval(() => { if (brumasSync.ready) cajaController.verificarMedianoche(); }, 30000);
 
         setInterval(() => {
             document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour12: true });
