@@ -172,6 +172,9 @@
                     <button onclick="router.cambiar('mesas')" id="nav-mesas" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-chair w-5 text-center"></i> Salón y Mesas
                     </button>
+                    <button onclick="router.cambiar('asistencia')" id="nav-asistencia" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
+                        <i class="fa-solid fa-clock w-5 text-center"></i> Mi asistencia
+                    </button>
                     <button onclick="router.cambiar('kds')" id="nav-kds" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-kitchen-set w-5 text-center"></i> Comanderas (KDS)
                     </button>
@@ -374,6 +377,12 @@
                     <div id="mesas-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
                 </section>
 
+                <section id="view-asistencia" class="view-section hidden space-y-6">
+                    <div class="rounded-2xl bg-stone-900 text-white p-6"><p class="text-xs uppercase tracking-widest text-amber-300 font-bold">Reloj checador</p><h3 class="text-2xl font-black mt-1">Mi asistencia</h3><p class="text-sm text-stone-300 mt-2">Registra tu hora de entrada y salida. El sistema guarda la fecha y hora asociadas a tu usuario.</p></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><div id="asistencia-estado" class="text-sm text-stone-600 mb-4"></div><div class="flex flex-wrap gap-3"><button id="asistencia-entrada" onclick="asistenciaController.entrada()" class="rounded-xl bg-emerald-700 px-6 py-3 text-sm font-bold text-white">Registrar entrada</button><button id="asistencia-salida" onclick="asistenciaController.salida()" class="rounded-xl bg-stone-900 px-6 py-3 text-sm font-bold text-white">Registrar salida</button></div></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold mb-3">Mis registros recientes</h4><div id="asistencia-historial" class="space-y-2"></div></div>
+                </section>
+
                 <!-- 3. VISTA COMANDERAS DIGITALES (KDS) -->
                 <section id="view-kds" class="view-section hidden space-y-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200 flex justify-between items-center">
@@ -485,7 +494,7 @@
 
                 <section id="view-usuarios" class="view-section hidden space-y-6">
                     <div class="rounded-2xl bg-stone-900 text-white p-6"><p class="text-xs uppercase tracking-widest text-amber-300 font-bold">Seguridad del equipo</p><h3 class="text-2xl font-black mt-1">Usuarios y permisos</h3><p class="text-sm text-stone-300 mt-2">El administrador controla qué pantallas puede abrir cada empleado. Los permisos operativos permiten tomar pedidos, cobrar, consultar mesas y ver el menú.</p></div>
-                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold">Agregar empleado</h4><p class="text-xs text-stone-500 mt-1">Primero crea su cuenta de acceso en Supabase Authentication. Después registra aquí el mismo correo y selecciona sus permisos.</p><form onsubmit="accesoController.agregarEmpleado(event)" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3"><input id="nuevo-empleado-email" type="email" required placeholder="correo@ejemplo.com" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-nombre" type="text" placeholder="Nombre del empleado" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><button class="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white">Agregar empleado</button></form></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold">Agregar empleado</h4><p class="text-xs text-stone-500 mt-1">El administrador crea el acceso con correo y contraseña. El empleado solo podrá tomar pedidos, gestionar mesas y registrar su asistencia.</p><form onsubmit="accesoController.agregarEmpleado(event)" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3"><input id="nuevo-empleado-email" type="email" required placeholder="correo@ejemplo.com" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-nombre" type="text" required placeholder="Nombre del empleado" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Contraseña inicial (mínimo 8 caracteres)" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><button class="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white">Crear usuario y acceso</button></form><p class="mt-3 text-[11px] text-amber-800">La creación segura de cuentas requiere instalar la función de servidor incluida con esta actualización. La contraseña no se guarda en la base de datos de Brumas.</p></div>
                     <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold mb-1">Cuentas registradas</h4><p class="text-xs text-stone-500 mb-4">Los empleados solo pueden recibir permisos para las funciones operativas. Caja diaria, reportes, costos, personal y configuración quedan reservados al administrador.</p><div id="usuarios-lista" class="space-y-4"></div></div>
                 </section>
 
@@ -575,11 +584,11 @@
     <!-- SCRIPT CENTRAL DE CONTROL -->
     <script>
 
-        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles'];
+        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias'];
         const BRUMAS_STORAGE_KEYS = {
           productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', pedidos:'cm_pedidos', kds:'cm_kds',
           mermas:'cm_mermas', recetas:'cm_recetas', personal:'cm_personal', crm:'cm_crm',
-          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles'
+          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias'
         };
         const brumasSync = {
           client:null, user:null, channel:null, baseline:{}, queue:Promise.resolve(), ready:false,
@@ -670,6 +679,7 @@
               if(active==='pos'){posController.renderCategorias();posController.renderGrid();posController.renderMesasSelector();}
               if(active==='mesas')mesasController.render();
               if(active==='personal')personalController.render();
+              if(active==='asistencia')asistenciaController.render();
               if(active==='crm')crmController.render();
               if(active==='mermas')mermasController.render();
               if(active==='caja')cajaController.init();
@@ -790,6 +800,7 @@
                     mermas: 'Registro de Mermas y Desperdicios',
                     caja: 'Arqueos de Caja y Turnos',
                     personal: 'Reloj Checador y Personal',
+                    asistencia: 'Mi asistencia',
                     crm: 'Fidelización y Clientes (CRM)',
                     reportes: 'Analítica Financiera y Márgenes',
                     problemas: 'Guía de Diagnóstico y Averías',
@@ -806,6 +817,7 @@
                 if(vistaId === 'mermas') mermasController.render();
                 if(vistaId === 'caja') cajaController.init();
                 if(vistaId === 'personal') personalController.render();
+                if(vistaId === 'asistencia') asistenciaController.render();
                 if(vistaId === 'crm') crmController.render();
                 if(vistaId === 'reportes') { reportesController.init(); informeController.render(); }
                 if(vistaId === 'problemas') problemasController.init();
@@ -909,7 +921,7 @@
                 select.innerHTML = '<option value="">Selecciona una mesa</option>' +
                     db.mesas.map(m => {
                         const pedido = (db.pedidos || []).find(p => String(p.mesaId) === String(m.id) && p.estado === 'Abierta');
-                        const etiqueta = pedido ? `${m.numero} · Cuenta abierta` : `${m.numero} · ${m.estado || 'Libre'}`;
+                        const etiqueta = `${m.numero} · ${m.estado || (pedido ? 'Ocupada' : 'Libre')}${pedido ? ' · Cuenta abierta' : ''}`;
                         return `<option value="${m.id}">${etiqueta}</option>`;
                     }).join('');
                 if (selected && db.mesas.some(m => String(m.id) === selected)) select.value = selected;
@@ -1118,7 +1130,7 @@
                     db.pedidos.push(pedido);
                 }
 
-                mesa.estado = 'Ocupada';
+                mesa.estado = 'Esperando pedido';
                 db.kds.push({
                     id: Date.now() + Math.floor(Math.random() * 1000),
                     pedidoId: pedido.id,
@@ -1146,7 +1158,7 @@
                 const grid = document.getElementById('mesas-grid');
                 grid.innerHTML = db.mesas.map(m => {
                     const pedido = this.pedidoAbierto(db, m.id);
-                    const estado = pedido ? 'Ocupada' : (m.estado || 'Libre');
+                    const estado = m.estado || (pedido ? 'Ocupada' : 'Libre');
                     let colorClase = 'bg-emerald-50 border-emerald-200 text-emerald-800';
                     let dotClase = 'bg-emerald-500';
                     if (estado === 'Ocupada') { colorClase = 'bg-red-50 border-red-200 text-red-800'; dotClase = 'bg-red-500 alert-pulse'; }
@@ -1156,16 +1168,12 @@
                         ? `<div class="mt-2 pt-2 border-t border-current/20 text-[11px] font-bold"><div>${pedido.items.reduce((a,i)=>a+i.cantidad,0)} productos en cuenta</div><div class="text-sm mt-1">${formatoCOP(pedido.total)}</div><div class="text-[9px] font-semibold opacity-70">Toca para ver y cobrar</div></div>`
                         : `<div class="mt-2 text-[10px] opacity-70">Toca para ver la mesa</div>`;
                     return `
-                        <div onclick="mesasController.verCuenta(${m.id})" class="cursor-pointer p-5 rounded-2xl border transition flex flex-col justify-between shadow-xs ${colorClase} hover:shadow-md">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[10px] font-extrabold uppercase tracking-wider">${m.zona}</span>
-                                <span class="w-3 h-3 rounded-full ${dotClase}"></span>
+                        <div class="p-5 rounded-2xl border transition flex flex-col justify-between shadow-xs ${colorClase} hover:shadow-md">
+                            <div onclick="mesasController.verCuenta(${m.id})" class="cursor-pointer">
+                                <div class="flex justify-between items-center"><span class="text-[10px] font-extrabold uppercase tracking-wider">${m.zona}</span><span class="w-3 h-3 rounded-full ${dotClase}"></span></div>
+                                <div class="my-3"><h4 class="font-extrabold text-base">${m.numero}</h4><span class="text-xs font-bold mt-1 block">Estado: ${estado}</span>${resumen}</div>
                             </div>
-                            <div class="my-3">
-                                <h4 class="font-extrabold text-base">${m.numero}</h4>
-                                <span class="text-xs font-bold mt-1 block">Estado: ${estado}</span>
-                                ${resumen}
-                            </div>
+                            <button onclick="mesasController.avanzarEstado(${m.id})" class="mt-2 rounded-xl bg-white/80 border border-current/20 px-3 py-2 text-[11px] font-extrabold hover:bg-white">${estado==='Esperando pedido'?'Marcar pedido entregado · Ocupada':estado==='Ocupada'?'Marcar cuenta pedida':estado==='Cuenta pedida'?'Marcar mesa libre':'Cambiar estado'}</button>
                         </div>
                     `;
                 }).join('');
@@ -1234,6 +1242,19 @@
                 this.render();
                 posController.renderMesasSelector();
                 alert(`Cuenta de ${pedido.mesaNumero} cobrada por ${formatoCOP(venta.total)} vía ${metodo}.`);
+            },
+            avanzarEstado(id) {
+                if(!accesoController.puede('mesas'))return;
+                const db=sistema.cargarDB(),mesa=(db.mesas||[]).find(m=>String(m.id)===String(id));
+                if(!mesa)return;
+                const flujo=['Esperando pedido','Ocupada','Cuenta pedida','Libre'];
+                const actual=mesa.estado||'Libre';
+                const siguiente=flujo[(flujo.indexOf(actual)+1)%flujo.length];
+                if(siguiente==='Libre' && this.pedidoAbierto(db,id)){
+                    if(!confirm('La cuenta todavía está abierta. ¿Marcar la mesa como libre de todas formas? La cuenta seguirá pendiente y no se podrá perder.'))return;
+                }
+                mesa.estado=siguiente;mesa.estadoActualizadoEn=new Date().toISOString();mesa.estadoActualizadoPor=accesoController.actual?.email||'';
+                sistema.guardarDB(db);this.render();posController.renderMesasSelector();
             },
             cambiarEstado(id) {
                 this.verCuenta(id);
@@ -1655,6 +1676,37 @@
             }
         };
 
+        const asistenciaController = {
+            ahora(){return new Date().toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});},
+            render(){
+                const perfil=accesoController.actual;if(!perfil)return;
+                const db=sistema.cargarDB();db.asistencias=db.asistencias||[];
+                const mis= db.asistencias.filter(a=>String(a.email).toLowerCase()===String(perfil.email).toLowerCase()).sort((a,b)=>String(b.entradaISO).localeCompare(String(a.entradaISO)));
+                const abierto=mis.find(a=>!a.salidaISO);
+                const estado=document.getElementById('asistencia-estado');
+                if(estado)estado.innerHTML=abierto?`<b class="text-emerald-700">Turno en curso.</b> Entrada registrada: ${abierto.entradaTexto}`:'<b>Sin turno activo.</b> Registra tu entrada al comenzar.';
+                const en=document.getElementById('asistencia-entrada'),sal=document.getElementById('asistencia-salida');
+                if(en)en.disabled=!!abierto;if(sal)sal.disabled=!abierto;
+                if(en)en.classList.toggle('opacity-40',!!abierto);if(sal)sal.classList.toggle('opacity-40',!abierto);
+                const hist=document.getElementById('asistencia-historial');
+                if(hist)hist.innerHTML=mis.length?mis.slice(0,20).map(a=>`<div class="rounded-xl border border-stone-200 p-3 text-xs flex flex-wrap justify-between gap-2"><b>${a.fecha}</b><span>Entrada: ${a.entradaTexto}</span><span>Salida: ${a.salidaTexto||'Pendiente'}</span></div>`).join(''):'<p class="text-xs text-stone-400">Todavía no tienes registros de asistencia.</p>'
+            },
+            entrada(){
+                const perfil=accesoController.actual;if(!perfil)return;const db=sistema.cargarDB();db.asistencias=db.asistencias||[];
+                if(db.asistencias.some(a=>String(a.email).toLowerCase()===String(perfil.email).toLowerCase()&&!a.salidaISO)){alert('Ya tienes un turno abierto. Registra la salida del turno anterior.');return;}
+                const d=new Date(),fecha=d.toLocaleDateString('es-CO',{timeZone:'America/Bogota'}),texto=d.toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});
+                db.asistencias.push({id:'A-'+Date.now(),email:perfil.email,nombre:perfil.nombre,fecha,entradaISO:d.toISOString(),entradaTexto:texto,salidaISO:null,salidaTexto:null});
+                sistema.guardarDB(db);this.render();alert('Entrada registrada: '+texto);
+            },
+            salida(){
+                const perfil=accesoController.actual;if(!perfil)return;const db=sistema.cargarDB();db.asistencias=db.asistencias||[];
+                const a=db.asistencias.filter(x=>String(x.email).toLowerCase()===String(perfil.email).toLowerCase()&&!x.salidaISO).sort((x,y)=>String(y.entradaISO).localeCompare(String(x.entradaISO)))[0];
+                if(!a){alert('No tienes una entrada pendiente.');return;}
+                const d=new Date();a.salidaISO=d.toISOString();a.salidaTexto=d.toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});
+                sistema.guardarDB(db);this.render();alert('Salida registrada: '+a.salidaTexto);
+            }
+        };
+
         const crmController = {
             render() {
                 const db = sistema.cargarDB();
@@ -1858,7 +1910,7 @@
 
         const accesoController = {
             actual: null,
-            permisosEmpleadoBase: ['pos','mesas','kds','productos'],
+            permisosEmpleadoBase: ['pos','mesas','asistencia'],
             esAdmin() { return this.actual?.rol === 'admin'; },
             puede(vista) { return this.esAdmin() || (this.actual?.permisos || this.permisosEmpleadoBase).includes(vista); },
             requireAdmin() { if(this.esAdmin()) return true; alert('🔒 Esta acción solo está disponible para el administrador.'); return false; },
@@ -1872,6 +1924,14 @@
                         rol:primerUsuario?'admin':'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()};
                     db.perfiles.push(perfil);sistema.guardarDB(db);
                     if(primerUsuario) alert('Este es el primer usuario registrado: se ha asignado el perfil de administrador.');
+                }
+                if(perfil.rol!=='admin'){
+                    perfil.permisos=(perfil.permisos||[]).filter(k=>this.permisosEmpleadoBase.includes(k));
+                    // En esta versión los empleados quedan limitados a pedidos, mesas y asistencia.
+                    perfil.permisos=this.permisosEmpleadoBase.slice();
+                    const idx=db.perfiles.findIndex(p=>String(p.email||'').toLowerCase()===email);
+                    if(idx>=0)db.perfiles[idx]=perfil;
+                    sistema.guardarDB(db);
                 }
                 this.actual=perfil;this.aplicar();
                 const badge=document.getElementById('brumas-user-email');
@@ -1890,7 +1950,7 @@
                 if(!this.requireAdmin())return;
                 const db=sistema.cargarDB(),cont=document.getElementById('usuarios-lista');if(!cont)return;
                 const empleados=(db.perfiles||[]).filter(p=>p.rol!=='admin');
-                const opciones=[['pos','Tomar pedidos y cobrar'],['mesas','Ver mesas y cuentas'],['kds','Ver comandera de cocina'],['productos','Consultar menú e inventario']];
+                const opciones=[['pos','Tomar pedidos y cobrar'],['mesas','Ver y actualizar estados de mesas'],['asistencia','Registrar entrada y salida']];
                 cont.innerHTML=`<div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3"><b>Administrador:</b> ${this.actual?.email||''} · acceso completo</div>`+
                     (empleados.length?empleados.map(p=>{
                         const token=encodeURIComponent(p.email);
@@ -1899,16 +1959,23 @@
                         return `<div class="rounded-xl border border-stone-200 p-4"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><b class="text-sm">${nombre}</b><p class="text-xs text-stone-500">${p.email}</p></div><button onclick="accesoController.eliminarEmpleado('${token}')" class="text-xs text-red-600 font-bold">Quitar acceso</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${checks}</div></div>`;
                     }).join(''):'<p class="text-xs text-stone-400">Aún no hay empleados agregados.</p>');
             },
-            agregarEmpleado(e) {
+            async agregarEmpleado(e) {
                 e.preventDefault();if(!this.requireAdmin())return;
                 const email=document.getElementById('nuevo-empleado-email').value.trim().toLowerCase();
-                const nombre=document.getElementById('nuevo-empleado-nombre').value.trim()||email.split('@')[0];
+                const nombre=document.getElementById('nuevo-empleado-nombre').value.trim();
+                const password=document.getElementById('nuevo-empleado-password').value;
                 if(!email||!email.includes('@')){alert('Escribe un correo válido.');return;}
+                if(password.length<8){alert('La contraseña debe tener al menos 8 caracteres.');return;}
                 const db=sistema.cargarDB();db.perfiles=db.perfiles||[];
-                if(db.perfiles.some(p=>String(p.email).toLowerCase()===email)){alert('Ese correo ya está registrado.');return;}
-                db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()});
-                sistema.guardarDB(db);e.target.reset();this.render();
-                alert('Empleado agregado. Debe tener una cuenta creada en Supabase Authentication con este mismo correo para poder ingresar.');
+                if(db.perfiles.some(p=>String(p.email).toLowerCase()===email)){alert('Ese correo ya está registrado en Brumas.');return;}
+                try{
+                    const {data:{session}}=await brumasSync.client.auth.getSession();
+                    const {data,error}=await brumasSync.client.functions.invoke('crear-empleado',{body:{email,nombre,password},headers:{Authorization:`Bearer ${session?.access_token||''}`}});
+                    if(error)throw error;if(data?.error)throw new Error(data.error);
+                    db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()});
+                    sistema.guardarDB(db);e.target.reset();this.render();
+                    alert('Usuario creado correctamente. Ya puede ingresar con su correo y contraseña.');
+                }catch(err){console.error(err);alert('No se pudo crear la cuenta. Verifica que esté instalada la función segura crear-empleado en Supabase. Detalle: '+(err.message||err));}
             },
             cambiarPermiso(token,permiso,habilitado) {
                 if(!this.requireAdmin())return;
