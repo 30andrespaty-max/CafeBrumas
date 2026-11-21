@@ -326,10 +326,6 @@
                                     <span>Subtotal</span>
                                     <span id="cart-subtotal">$0</span>
                                 </div>
-                                <div class="flex justify-between text-stone-500">
-                                    <span>Impuestos (IVA 19%)</span>
-                                    <span id="cart-tax">$0</span>
-                                </div>
                                 <div class="flex justify-between text-base font-black text-stone-900 pt-2 border-t">
                                     <span>Total a Pagar</span>
                                     <span id="cart-total" class="text-amber-600">$0</span>
@@ -854,59 +850,71 @@
         const dashboardController = {
             init() {
                 const db = sistema.cargarDB();
-                const hoy = new Date().toLocaleDateString();
-                const ventasHoy = db.ventas.filter(v => fechaISORegistro(v.fecha) === new Date().toISOString().slice(0,10));
-                const ventasDia = ventasHoy.reduce((acc, v) => acc + v.total, 0);
-                const ordenesDia = ventasHoy.length;
-                const ticketProm = ordenesDia > 0 ? ventasDia / ordenesDia : 0;
-
-                document.getElementById('dash-ventas-dia').innerText = formatoCOP(ventasDia);
-                document.getElementById('dash-pedidos-dia').innerText = ordenesDia;
-                document.getElementById('dash-ticket-prom').innerText = formatoCOP(ticketProm);
+                const hoy = fechaISORegistro(new Date());
+                const ventas = (db.ventas || []).filter(v => fechaISORegistro(v.fecha) === hoy);
+                const ventasDia = ventas.reduce((acc, v) => acc + Number(v.total || 0), 0);
+                const ordenesDia = ventas.length;
+                const ticketProm = ordenesDia ? ventasDia / ordenesDia : 0;
+                const el = id => document.getElementById(id);
+                if (el('dash-ventas-dia')) el('dash-ventas-dia').innerText = formatoCOP(ventasDia);
+                if (el('dash-pedidos-dia')) el('dash-pedidos-dia').innerText = ordenesDia;
+                if (el('dash-ticket-prom')) el('dash-ticket-prom').innerText = formatoCOP(ticketProm);
 
                 const ranking = {};
-                ventasHoy.forEach(v => (v.items || []).forEach(i => ranking[i.nombre] = (ranking[i.nombre] || 0) + i.cantidad));
+                ventas.forEach(v => (v.items || []).forEach(i => {
+                    const nombre = i.nombre || 'Producto';
+                    ranking[nombre] = (ranking[nombre] || 0) + Number(i.cantidad || 0);
+                }));
                 const top = Object.entries(ranking).sort((a,b) => b[1]-a[1])[0];
-                document.getElementById('dash-prod-estrella').innerText = top ? top[0] : 'Sin ventas';
-                this.renderCharts(ventasHoy);
+                if (el('dash-prod-estrella')) el('dash-prod-estrella').innerText = top ? `${top[0]} (${top[1]})` : 'Sin ventas';
+                this.renderCharts(ventas);
+            },
+            fechaVenta(v) {
+                if (v.fecha instanceof Date) return v.fecha;
+                const raw = String(v.fecha || '');
+                // Registros anteriores se guardaron con toLocaleString() (dd/mm/aaaa, hh:mm:ss).
+                const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(a\.\s*m\.|p\.\s*m\.)?)?/i);
+                if (m) {
+                    let h = Number(m[4] || 0);
+                    const suf = (m[7] || '').toLowerCase();
+                    if (suf.includes('p') && h < 12) h += 12;
+                    if (suf.includes('a') && h === 12) h = 0;
+                    return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]), h, Number(m[5]||0), Number(m[6]||0));
+                }
+                const d = new Date(raw);
+                return isNaN(d.getTime()) ? null : d;
             },
             renderCharts(ventas) {
-                // Gráfico Ventas por Hora
-                const ctxHourly = document.getElementById('hourlySalesChart').getContext('2d');
-                if(hourlyChartInstance) hourlyChartInstance.destroy();
-
-                hourlyChartInstance = new Chart(ctxHourly, {
-                    type: 'bar',
-                    data: {
-                        labels: ['08:00 AM', '10:00 AM', '12:00 PM', '02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM'],
-                        datasets: [{
-                            label: 'Ventas por Franja ($)',
-                            data: ['08','10','12','14','16','18','20'].map(h => ventas.filter(v => new Date(v.fecha).getHours() >= Number(h) && new Date(v.fecha).getHours() < Number(h)+2).reduce((a,v)=>a+v.total,0)),
-                            backgroundColor: '#d97706',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-
-                // Gráfico Métodos de Pago
-                const efectivoTotal = ventas.filter(v => v.metodoPago === 'Efectivo').reduce((acc, v) => acc + v.total, 0);
-                const tarjetaTotal = ventas.filter(v => v.metodoPago === 'Tarjeta').reduce((acc, v) => acc + v.total, 0);
-
-                const ctxPayment = document.getElementById('paymentMethodChart').getContext('2d');
-                if(paymentChartInstance) paymentChartInstance.destroy();
-
-                paymentChartInstance = new Chart(ctxPayment, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Efectivo', 'Tarjeta / Datáfono'],
-                        datasets: [{
-                            data: [efectivoTotal, tarjetaTotal],
-                            backgroundColor: ['#059669', '#1c1917']
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
+                if (typeof Chart === 'undefined') return;
+                const hourly = document.getElementById('hourlySalesChart');
+                const payment = document.getElementById('paymentMethodChart');
+                if (hourly) {
+                    if (hourlyChartInstance) hourlyChartInstance.destroy();
+                    const buckets = Array.from({length: 8}, (_,i) => ({label: `${String(i*3).padStart(2,'0')}:00`, total:0}));
+                    ventas.forEach(v => {
+                        const d = this.fechaVenta(v);
+                        if (!d) return;
+                        const idx = Math.min(7, Math.floor(d.getHours()/3));
+                        buckets[idx].total += Number(v.total || 0);
+                    });
+                    hourlyChartInstance = new Chart(hourly.getContext('2d'), {
+                        type: 'bar',
+                        data: { labels: buckets.map(b => b.label), datasets: [{ label:'Ventas (COP)', data:buckets.map(b=>b.total), backgroundColor:'#d97706', borderRadius:6 }] },
+                        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>formatoCOP(v)}}} }
+                    });
+                }
+                if (payment) {
+                    if (paymentChartInstance) paymentChartInstance.destroy();
+                    const metodos = ['Efectivo','Tarjeta','QR'];
+                    const totales = metodos.map(m => ventas.filter(v => {
+                        const p = String(v.metodoPago || '').toLowerCase();
+                        return m === 'Efectivo' ? ['efectivo','dinero'].includes(p) : p === m.toLowerCase();
+                    }).reduce((a,v)=>a+Number(v.total||0),0));
+                    paymentChartInstance = new Chart(payment.getContext('2d'), {
+                        type:'doughnut', data:{labels:metodos,datasets:[{data:totales,backgroundColor:['#059669','#1c1917','#7c3aed']}]},
+                        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+                    });
+                }
             }
         };
 
@@ -1047,7 +1055,6 @@
                             Selecciona productos para iniciar la orden
                         </div>`;
                     document.getElementById('cart-subtotal').innerText = formatoCOP(0);
-                    document.getElementById('cart-tax').innerText = formatoCOP(0);
                     document.getElementById('cart-total').innerText = formatoCOP(0);
                     return;
                 }
@@ -1068,10 +1075,8 @@
                     </div>
                 `).join('');
                 const subtotal = carritoActual.reduce((acc, i) => acc + (i.precio * i.cantidad), 0);
-                const tax = subtotal * 0.19;
                 document.getElementById('cart-subtotal').innerText = formatoCOP(subtotal);
-                document.getElementById('cart-tax').innerText = formatoCOP(tax);
-                document.getElementById('cart-total').innerText = formatoCOP(subtotal + tax);
+                document.getElementById('cart-total').innerText = formatoCOP(subtotal);
             },
             cambiarCantidad(index, delta) {
                 carritoActual[index].cantidad += delta;
@@ -1119,19 +1124,18 @@
                     });
                     pedido.actualizado = new Date().toLocaleString();
                     pedido.subtotal = pedido.items.reduce((a, i) => a + i.precio * i.cantidad, 0);
-                    pedido.impuesto = pedido.subtotal * 0.19;
-                    pedido.total = pedido.subtotal + pedido.impuesto;
+                    pedido.impuesto = 0;
+                    pedido.total = pedido.subtotal;
                 } else {
                     const subtotal = nuevosItems.reduce((a, i) => a + i.precio * i.cantidad, 0);
-                    const impuesto = subtotal * 0.19;
                     pedido = {
                         id: 'P-' + Date.now(),
                         mesaId: mesa.id,
                         mesaNumero: mesa.numero,
                         items: nuevosItems,
                         subtotal,
-                        impuesto,
-                        total: subtotal + impuesto,
+                        impuesto: 0,
+                        total: subtotal,
                         fecha: new Date().toLocaleString(),
                         actualizado: new Date().toLocaleString(),
                         estado: 'Abierta', destinoTipo, destinoNumero: Number(destinoNumero)
@@ -1228,6 +1232,12 @@
                 const mesa = db.mesas.find(m => String(m.id) === String(mesaId));
                 const pedido = this.pedidoAbierto(db, mesaId);
                 if (!mesa) return;
+                if (pedido) {
+                    pedido.subtotal = (pedido.items || []).reduce((s, i) => s + Number(i.precio || 0) * Number(i.cantidad || 0), 0);
+                    pedido.impuesto = 0;
+                    pedido.total = pedido.subtotal;
+                    sistema.guardarDB(db);
+                }
                 if (!pedido) {
                     abrirModalGeneral(`${mesa.numero} · ${mesa.estado || 'Libre'}`, `
                         <div class="space-y-3 text-sm">
@@ -1252,7 +1262,6 @@
                         <div class="max-h-64 overflow-y-auto">${filas}</div>
                         <div class="border-t pt-3 space-y-1 text-xs">
                             <div class="flex justify-between text-stone-500"><span>Subtotal</span><b>${formatoCOP(pedido.subtotal)}</b></div>
-                            <div class="flex justify-between text-stone-500"><span>IVA (19%)</span><b>${formatoCOP(pedido.impuesto)}</b></div>
                             <div class="flex justify-between text-base font-black pt-2"><span>Total por pagar</span><span class="text-amber-700">${formatoCOP(pedido.total)}</span></div>
                         </div>
                         <div class="rounded-xl bg-stone-50 p-3 text-xs text-stone-600">Destino: <b>${pedido.destinoTipo==='fiado'?'Fiado · Amigo '+pedido.destinoNumero:'Caja '+(pedido.destinoNumero||1)}</b></div>
@@ -1269,6 +1278,10 @@
                 const db = sistema.cargarDB();
                 const pedido = (db.pedidos || []).find(p => String(p.id) === String(pedidoId) && p.estado === 'Abierta');
                 if (!pedido) { alert('Esta cuenta ya fue cerrada o no existe.'); cerrarModalGeneral(); return; }
+                // El total corresponde únicamente a la suma de los productos; no se agrega IVA.
+                pedido.subtotal = (pedido.items || []).reduce((s, i) => s + Number(i.precio || 0) * Number(i.cantidad || 0), 0);
+                pedido.impuesto = 0;
+                pedido.total = pedido.subtotal;
                 const mesa = db.mesas.find(m => String(m.id) === String(pedido.mesaId));
                 const ahora = new Date().toLocaleString();
                 if (pedido.destinoTipo === 'fiado') {
