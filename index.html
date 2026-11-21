@@ -340,6 +340,11 @@
                                 <select id="pos-mesa-select" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-700">
                                     <option value="">Selecciona una mesa</option>
                                 </select>
+                                <label for="pos-destino-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-stone-500 mt-2">Registrar consumo en una caja o fiado</label>
+                                <select id="pos-destino-select" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-700">
+                                    <optgroup label="Cajas"><option value="caja:1">Caja 1</option><option value="caja:2">Caja 2</option><option value="caja:3">Caja 3</option><option value="caja:4">Caja 4</option><option value="caja:5">Caja 5</option><option value="caja:6">Caja 6</option><option value="caja:7">Caja 7</option><option value="caja:8">Caja 8</option></optgroup>
+                                    <optgroup label="Fiados a amigos"><option value="fiado:1">Fiado · Amigo 1</option><option value="fiado:2">Fiado · Amigo 2</option><option value="fiado:3">Fiado · Amigo 3</option><option value="fiado:4">Fiado · Amigo 4</option></optgroup>
+                                </select>
                                 <button onclick="posController.enviarPedido()" class="w-full cursor-pointer bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
                                     <i class="fa-solid fa-paper-plane"></i> Enviar pedido · Dejar cuenta abierta
                                 </button>
@@ -443,12 +448,18 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                         <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Ventas del día</span><h3 id="caja-total-dia" class="text-2xl font-black mt-2">$0</h3><p id="caja-transacciones-dia" class="text-xs text-stone-500 mt-1">0 transacciones</p></div>
                         <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Efectivo</span><h3 id="caja-efectivo-dia" class="text-2xl font-black text-emerald-700 mt-2">$0</h3></div>
-                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Tarjeta / digital</span><h3 id="caja-tarjeta-dia" class="text-2xl font-black text-amber-700 mt-2">$0</h3></div>
+                        <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Tarjeta + QR</span><h3 id="caja-tarjeta-dia" class="text-2xl font-black text-amber-700 mt-2">$0</h3></div>
                         <div class="bg-white p-5 rounded-2xl border border-stone-200"><span class="text-xs font-bold text-stone-400 uppercase">Efectivo esperado</span><h3 id="caja-esperado-dia" class="text-2xl font-black mt-2">$0</h3><p class="text-xs text-stone-500 mt-1">Fondo inicial + ventas en efectivo</p></div>
                     </div>
+                    <div class="bg-white p-6 rounded-2xl border border-stone-200"><h4 class="font-bold text-stone-800">Movimiento por cada una de las 8 cajas</h4><p class="text-xs text-stone-500 mt-1">Total de pagos recibidos hoy, agrupados según la caja seleccionada al tomar el pedido.</p><div id="caja-cajas-resumen" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4"></div></div>
                     <div class="bg-white p-6 rounded-2xl border border-stone-200">
                         <h4 class="font-bold text-stone-800">Apertura de caja</h4><p class="text-xs text-stone-500 mt-1">Registra el dinero base con el que comienza el día.</p>
                         <div class="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end"><label class="text-xs font-bold text-stone-600 flex-1">Fondo inicial (COP)<input id="caja-fondo-input" type="number" min="0" step="1" class="mt-1 w-full rounded-xl border border-stone-300 px-3 py-3"></label><div class="text-xs text-stone-500">Fondo guardado: <b id="caja-fondo-dia">$0</b></div><button onclick="cajaController.guardarFondo()" class="rounded-xl bg-amber-700 px-5 py-3 text-xs font-bold text-white">Guardar fondo</button></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-stone-200">
+                        <div class="flex flex-wrap items-center justify-between gap-2"><div><h4 class="font-bold text-stone-800">Fiados a los amigos</h4><p class="text-xs text-stone-500 mt-1">Consulta los saldos pendientes de los cuatro fiados y registra abonos o pagos cuando los recibas.</p></div><button onclick="fiadosController.render()" class="rounded-xl border px-3 py-2 text-xs font-bold">Actualizar</button></div>
+                        <div id="fiados-resumen" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4"></div>
+                        <div id="fiados-detalle" class="mt-4 space-y-3"></div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-stone-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4"><div><h4 class="font-bold text-stone-800">Finalizar jornada</h4><p class="text-xs text-stone-500 mt-1">Compara el efectivo esperado con el dinero contado y guarda la diferencia.</p></div><button id="caja-btn-cerrar" onclick="cajaController.abrirModal()" class="rounded-xl bg-stone-900 px-5 py-3 text-xs font-bold text-white"><i class="fa-solid fa-lock mr-2"></i>Cerrar caja del día</button></div>
                     <div class="bg-white p-6 rounded-2xl border border-stone-200"><h4 class="font-bold text-stone-800 mb-2">Historial de cierres</h4><p class="text-xs text-stone-500 mb-3">Los días anteriores quedan guardados; el cierre automático de medianoche conserva las ventas aunque la página esté cerrada.</p><div id="caja-historial"></div></div>
@@ -570,11 +581,11 @@
     <!-- SCRIPT CENTRAL DE CONTROL -->
     <script>
 
-        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias','guiaProblemas'];
+        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias','guiaProblemas','fiados'];
         const BRUMAS_STORAGE_KEYS = {
           productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', pedidos:'cm_pedidos', kds:'cm_kds',
           mermas:'cm_mermas', recetas:'cm_recetas', personal:'cm_personal', crm:'cm_crm',
-          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias', guiaProblemas:'cm_guia_problemas'
+          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias', guiaProblemas:'cm_guia_problemas', fiados:'cm_fiados'
         };
         const brumasSync = {
           client:null, user:null, channel:null, baseline:{}, queue:Promise.resolve(), ready:false,
@@ -1094,9 +1105,13 @@
                     if (producto) producto.stock = Number(producto.stock) - Number(item.cantidad);
                 });
 
+                const destinoRaw = document.getElementById('pos-destino-select')?.value || 'caja:1';
+                const [destinoTipo, destinoNumero] = destinoRaw.split(':');
                 let pedido = db.pedidos.find(p => String(p.mesaId) === String(mesa.id) && p.estado === 'Abierta');
                 const nuevosItems = carritoActual.map(i => ({ id: i.id, nombre: i.nombre, precio: Number(i.precio), cantidad: Number(i.cantidad) }));
                 if (pedido) {
+                    if (pedido.destinoTipo && (pedido.destinoTipo !== destinoTipo || String(pedido.destinoNumero) !== String(destinoNumero))) { alert('Esta cuenta ya tiene asignada otra caja o fiado. Cobra o cierra la cuenta antes de cambiar el destino.'); return; }
+                    pedido.destinoTipo = destinoTipo; pedido.destinoNumero = Number(destinoNumero);
                     nuevosItems.forEach(nuevo => {
                         const existente = pedido.items.find(i => i.nombre === nuevo.nombre && Number(i.precio) === nuevo.precio);
                         if (existente) existente.cantidad += nuevo.cantidad;
@@ -1119,7 +1134,7 @@
                         total: subtotal + impuesto,
                         fecha: new Date().toLocaleString(),
                         actualizado: new Date().toLocaleString(),
-                        estado: 'Abierta'
+                        estado: 'Abierta', destinoTipo, destinoNumero: Number(destinoNumero)
                     };
                     db.pedidos.push(pedido);
                 }
@@ -1240,9 +1255,11 @@
                             <div class="flex justify-between text-stone-500"><span>IVA (19%)</span><b>${formatoCOP(pedido.impuesto)}</b></div>
                             <div class="flex justify-between text-base font-black pt-2"><span>Total por pagar</span><span class="text-amber-700">${formatoCOP(pedido.total)}</span></div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 pt-2">
-                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Efectivo')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-money-bill-wave mr-1"></i> Cobrar efectivo</button>
-                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Tarjeta')" class="bg-stone-900 hover:bg-stone-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-credit-card mr-1"></i> Cobrar tarjeta</button>
+                        <div class="rounded-xl bg-stone-50 p-3 text-xs text-stone-600">Destino: <b>${pedido.destinoTipo==='fiado'?'Fiado · Amigo '+pedido.destinoNumero:'Caja '+(pedido.destinoNumero||1)}</b></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Efectivo')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-money-bill-wave mr-1"></i> Dinero</button>
+                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Tarjeta')" class="bg-stone-900 hover:bg-stone-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-credit-card mr-1"></i> Tarjeta</button>
+                            <button onclick="mesasController.cobrarPedido('${pedido.id}','QR')" class="bg-violet-700 hover:bg-violet-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-qrcode mr-1"></i> QR</button>
                         </div>
                         <p class="text-[10px] text-stone-400 text-center">La mesa se liberará automáticamente al registrar el pago.</p>
                     </div>
@@ -1253,25 +1270,22 @@
                 const pedido = (db.pedidos || []).find(p => String(p.id) === String(pedidoId) && p.estado === 'Abierta');
                 if (!pedido) { alert('Esta cuenta ya fue cerrada o no existe.'); cerrarModalGeneral(); return; }
                 const mesa = db.mesas.find(m => String(m.id) === String(pedido.mesaId));
-                const venta = {
-                    id: 'V-' + Date.now().toString().slice(-6),
-                    fecha: new Date().toLocaleString(),
-                    items: pedido.items.map(i => ({ ...i })),
-                    total: Number(pedido.total),
-                    metodoPago: metodo,
-                    mesa: pedido.mesaNumero,
-                    pedidoId: pedido.id
-                };
-                db.ventas.push(venta);
-                pedido.estado = 'Pagada';
-                pedido.metodoPago = metodo;
-                pedido.fechaPago = new Date().toLocaleString();
-                if (mesa) mesa.estado = 'Libre';
-                sistema.guardarDB(db);
-                cerrarModalGeneral();
-                this.render();
-                posController.renderMesasSelector();
-                alert(`Cuenta de ${pedido.mesaNumero} cobrada por ${formatoCOP(venta.total)} vía ${metodo}.`);
+                const ahora = new Date().toLocaleString();
+                if (pedido.destinoTipo === 'fiado') {
+                    db.fiados = db.fiados || [];
+                    const amigo = Number(pedido.destinoNumero || 1);
+                    db.fiados.push({ id:'F-'+Date.now(), amigo, pedidoId:pedido.id, mesa:pedido.mesaNumero, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), saldo:Number(pedido.total), fecha:ahora, estado:'Pendiente', abonos:[] });
+                    pedido.estado='Fiado'; pedido.fiadoAmigo=amigo; pedido.fechaFiado=ahora;
+                    if (mesa) mesa.estado='Libre';
+                    sistema.guardarDB(db); cerrarModalGeneral(); this.render(); posController.renderMesasSelector(); fiadosController.render();
+                    abrirModalGeneral('Fiado registrado', `<div class="space-y-3 text-sm"><p>La cuenta de <b>${pedido.mesaNumero}</b> quedó registrada a nombre de <b>Amigo ${amigo}</b>.</p><p class="text-xl font-black text-amber-700">${formatoCOP(pedido.total)}</p><p class="text-xs text-stone-500">El saldo aparecerá en el apartado de fiados y no se contará como venta pagada hasta recibir el dinero.</p><button onclick="cerrarModalGeneral()" class="w-full rounded-xl bg-stone-900 text-white py-3 text-xs font-bold">Aceptar</button></div>`);
+                    return;
+                }
+                const venta = { id:'V-'+Date.now().toString().slice(-6), fecha:ahora, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), metodoPago:metodo, mesa:pedido.mesaNumero, pedidoId:pedido.id, cajaNumero:Number(pedido.destinoNumero||1) };
+                db.ventas.push(venta); pedido.estado='Pagada'; pedido.metodoPago=metodo; pedido.fechaPago=ahora;
+                if (mesa) mesa.estado='Libre';
+                sistema.guardarDB(db); cerrarModalGeneral(); this.render(); posController.renderMesasSelector(); cajaController.render();
+                mostrarRecibo(venta);
             },
             avanzarEstado(id) {
                 if(!accesoController.puede('mesas'))return;
@@ -1510,9 +1524,43 @@
         function resumenVentasFecha(db, fecha) {
             const ventas = (db.ventas || []).filter(v => fechaISORegistro(v.fecha) === fecha);
             const efectivo = ventas.filter(v => v.metodoPago === 'Efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
-            const tarjeta = ventas.filter(v => v.metodoPago !== 'Efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
-            return { ventas, efectivo, tarjeta, total: efectivo + tarjeta };
+            const tarjeta = ventas.filter(v => v.metodoPago === 'Tarjeta').reduce((a,v) => a + Number(v.total || 0), 0);
+            const qr = ventas.filter(v => v.metodoPago === 'QR').reduce((a,v) => a + Number(v.total || 0), 0);
+            return { ventas, efectivo, tarjeta, qr, total: efectivo + tarjeta + qr };
         }
+        function textoRecibo(venta) {
+            const lineas=(venta.items||[]).map(i=>`${i.nombre} x${i.cantidad} — ${formatoCOP(Number(i.precio)*Number(i.cantidad))}`).join('\n');
+            return `BRUMAS CAFÉ\n¡Gracias por tu compra!\n${venta.fecha||''}\nMesa: ${venta.mesa||'Para llevar'}\n\n${lineas}\n\nTOTAL: ${formatoCOP(venta.total)}\nPago: ${venta.metodoPago||'Pendiente'}\n\n¡Gracias por visitarnos!`;
+        }
+        function mostrarRecibo(venta) {
+            const lineas=(venta.items||[]).map(i=>`<div class="flex justify-between gap-3 border-b py-2 text-xs"><span>${i.nombre} × ${i.cantidad}</span><b>${formatoCOP(Number(i.precio)*Number(i.cantidad))}</b></div>`).join('');
+            abrirModalGeneral('Recibo de compra', `<div class="space-y-3"><div class="rounded-xl border border-dashed border-stone-300 p-4"><div class="text-center"><h3 class="font-black text-lg">BRUMAS CAFÉ</h3><p class="text-xs text-stone-500">¡Gracias por tu compra!</p><p class="text-[10px] text-stone-400 mt-1">${venta.fecha||''} · ${venta.mesa||''}</p></div><div class="mt-3">${lineas}</div><div class="flex justify-between border-t mt-3 pt-3 text-base font-black"><span>TOTAL</span><span class="text-amber-700">${formatoCOP(venta.total)}</span></div><p class="text-[11px] text-stone-500 mt-2">Método de pago: ${venta.metodoPago}</p><p class="text-center text-xs font-semibold mt-3">¡Esperamos verte pronto!</p></div><button onclick="recibosController.compartir('${venta.id}')" class="w-full rounded-xl bg-emerald-600 text-white py-3 text-xs font-bold"><i class="fa-brands fa-whatsapp mr-2"></i>Enviar recibo por WhatsApp</button><button onclick="cerrarModalGeneral()" class="w-full rounded-xl border py-3 text-xs font-bold">No enviar · Cerrar recibo <i class="fa-solid fa-xmark ml-1"></i></button></div>`);
+        }
+        const recibosController = { compartir(id) { const db=sistema.cargarDB(),v=(db.ventas||[]).find(x=>String(x.id)===String(id));if(!v)return;window.open('https://wa.me/?text='+encodeURIComponent(textoRecibo(v)),'_blank'); } };
+
+        const fiadosController = {
+            render() {
+                const db=sistema.cargarDB(); db.fiados=db.fiados||[];
+                const resumen=document.getElementById('fiados-resumen'),detalle=document.getElementById('fiados-detalle');
+                if(!resumen||!detalle)return;
+                resumen.innerHTML=[1,2,3,4].map(n=>{const rows=db.fiados.filter(f=>Number(f.amigo)===n&&Number(f.saldo)>0);const saldo=rows.reduce((a,f)=>a+Number(f.saldo||0),0);return `<div class="rounded-xl border border-amber-100 bg-amber-50 p-4"><p class="text-xs font-bold text-stone-600">Amigo ${n}</p><p class="text-lg font-black text-amber-800 mt-1">${formatoCOP(saldo)}</p><p class="text-[10px] text-stone-500">${rows.length} cuenta(s) pendiente(s)</p></div>`;}).join('');
+                const pendientes=db.fiados.filter(f=>Number(f.saldo)>0);
+                detalle.innerHTML=pendientes.length?pendientes.map(f=>`<div class="border rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3"><div><b class="text-sm">Amigo ${f.amigo} · ${f.mesa||'Consumo'}</b><p class="text-[10px] text-stone-500">${f.fecha} · Cuenta ${f.pedidoId}</p><p class="text-xs text-stone-600 mt-1">${(f.items||[]).map(i=>`${i.nombre} x${i.cantidad}`).join(', ')}</p><p class="text-xs mt-1">Total: ${formatoCOP(f.total)} · <b class="text-amber-800">Pendiente: ${formatoCOP(f.saldo)}</b></p></div><button onclick="fiadosController.abrirPago('${f.id}')" class="rounded-xl bg-emerald-700 text-white px-4 py-2.5 text-xs font-bold">Registrar pago / abono</button></div>`).join(''):'<p class="text-xs text-stone-400">No hay fiados pendientes. ¡Todo está al día!</p>';
+            },
+            abrirPago(id) {
+                const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
+                abrirModalGeneral('Registrar pago de fiado', `<form onsubmit="fiadosController.confirmarPago(event,'${f.id}')" class="space-y-3"><p class="text-sm">Amigo ${f.amigo} · Saldo pendiente: <b>${formatoCOP(f.saldo)}</b></p><label class="block text-xs font-bold">Valor recibido (COP)<input id="fiado-pago-valor" type="number" min="1" max="${Number(f.saldo)}" step="1" required value="${Number(f.saldo)}" class="mt-1 w-full rounded-xl border px-3 py-3"></label><label class="block text-xs font-bold">Registrar ingreso en<select id="fiado-pago-caja" class="mt-1 w-full rounded-xl border px-3 py-3">${Array.from({length:8},(_,i)=>`<option value="${i+1}">Caja ${i+1}</option>`).join('')}</select></label><label class="block text-xs font-bold">Método de pago<select id="fiado-pago-metodo" class="mt-1 w-full rounded-xl border px-3 py-3"><option>Efectivo</option><option>Tarjeta</option><option>QR</option></select></label><div class="flex gap-2"><button type="button" onclick="cerrarModalGeneral()" class="flex-1 rounded-xl border py-3 text-xs font-bold">Cancelar</button><button class="flex-1 rounded-xl bg-emerald-700 text-white py-3 text-xs font-bold">Guardar pago</button></div></form>`);
+            },
+            confirmarPago(e,id) {
+                e.preventDefault();const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
+                const valor=Number(document.getElementById('fiado-pago-valor').value),metodo=document.getElementById('fiado-pago-metodo').value,caja=Number(document.getElementById('fiado-pago-caja').value);
+                if(!Number.isFinite(valor)||valor<=0||valor>Number(f.saldo)){alert('El valor debe ser mayor que cero y no superar el saldo pendiente.');return;}
+                const ahora=new Date().toLocaleString();f.abonos=f.abonos||[];f.abonos.push({fecha:ahora,valor,metodoPago:metodo,cajaNumero:caja});f.saldo=Math.max(0,Number(f.saldo)-valor);if(f.saldo===0)f.estado='Pagado';
+                const venta={id:'VF-'+Date.now(),fecha:ahora,items:[{nombre:`Pago fiado · Amigo ${f.amigo}`,cantidad:1,precio:valor}],total:valor,metodoPago:metodo,cajaNumero:caja,fiadoId:f.id,tipo:'Pago de fiado',mesa:f.mesa};db.ventas.push(venta);
+                sistema.guardarDB(db);cerrarModalGeneral();this.render();cajaController.render();mostrarRecibo(venta);
+            }
+        };
+
         const cajaController = {
             fechaActual: fechaBogotaISO(),
             obtenerDia(db, fecha) {
@@ -1540,8 +1588,10 @@
                 const r = resumenVentasFecha(db, dia.fecha), fondo = Number(dia.fondoInicial || 0), esperado = fondo + r.efectivo;
                 Object.assign(dia, {
                     estado: 'Cerrada', cierreTipo: tipo, cerradoEn: new Date().toISOString(),
-                    ventasTotal: r.total, ventasEfectivo: r.efectivo, ventasTarjeta: r.tarjeta,
+                    ventasTotal: r.total, ventasEfectivo: r.efectivo, ventasTarjeta: r.tarjeta, ventasQR: r.qr,
                     transacciones: r.ventas.length, efectivoEsperado: esperado,
+                    ventasPorCaja: Array.from({length:8},(_,i)=>({caja:i+1,total:r.ventas.filter(v=>Number(v.cajaNumero||1)===i+1).reduce((a,v)=>a+Number(v.total||0),0)})),
+                    fiadosPendientes: (db.fiados||[]).reduce((a,f)=>a+Number(f.saldo||0),0),
                     efectivoContado: contado === null ? null : Number(contado),
                     diferencia: contado === null ? null : Number(contado) - esperado,
                     observaciones: observaciones || ''
@@ -1558,13 +1608,16 @@
             init() { if (!accesoController.esAdmin()) return; this.asegurarDiaActual(); this.render(); },
             render() {
                 const db = sistema.cargarDB(), hoy = fechaBogotaISO(), dia = this.obtenerDia(db, hoy), r = resumenVentasFecha(db, hoy);
+                fiadosController.render();
                 const fondo = Number(dia.fondoInicial || 0), esperado = fondo + r.efectivo;
                 const valores = {
                     'caja-fecha': hoy, 'caja-total-dia': formatoCOP(r.total), 'caja-efectivo-dia': formatoCOP(r.efectivo),
-                    'caja-tarjeta-dia': formatoCOP(r.tarjeta), 'caja-transacciones-dia': `${r.ventas.length} transacciones`,
+                    'caja-tarjeta-dia': formatoCOP(r.tarjeta + r.qr), 'caja-transacciones-dia': `${r.ventas.length} transacciones`,
                     'caja-fondo-dia': formatoCOP(fondo), 'caja-esperado-dia': formatoCOP(esperado)
                 };
                 Object.entries(valores).forEach(([id,v]) => { const el=document.getElementById(id); if(el) el.textContent=v; });
+                const cajasBox=document.getElementById('caja-cajas-resumen');
+                if(cajasBox)cajasBox.innerHTML=Array.from({length:8},(_,i)=>{const n=i+1,ventas=r.ventas.filter(v=>Number(v.cajaNumero||1)===n),total=ventas.reduce((a,v)=>a+Number(v.total||0),0);return `<div class="rounded-xl border border-stone-200 p-3"><p class="text-[10px] font-bold uppercase text-stone-500">Caja ${n}</p><p class="text-base font-black mt-1">${formatoCOP(total)}</p><p class="text-[10px] text-stone-400">${ventas.length} pago(s)</p></div>`;}).join('');
                 const input=document.getElementById('caja-fondo-input'); if(input && document.activeElement!==input) input.value=fondo;
                 const estado=document.getElementById('caja-estado-dia');
                 if(estado) estado.innerHTML=dia.estado==='Cerrada'
@@ -1578,7 +1631,7 @@
                     history.innerHTML=cierres.length?cierres.map(x=>`
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-2 items-center border-b border-stone-100 py-3 text-xs">
                             <strong>${x.fecha}</strong><span>${formatoCOP(x.ventasTotal||0)} ventas</span>
-                            <span>Efectivo: ${formatoCOP(x.ventasEfectivo||0)}</span><span>Tarjeta: ${formatoCOP(x.ventasTarjeta||0)}</span>
+                            <span>Efectivo: ${formatoCOP(x.ventasEfectivo||0)}</span><span>Tarjeta: ${formatoCOP(x.ventasTarjeta||0)} · QR: ${formatoCOP(x.ventasQR||0)}</span>
                             <span class="${x.diferencia===null?'text-stone-500':(Number(x.diferencia)===0?'text-emerald-700':'text-red-700')} font-bold">${x.diferencia===null?'Auto · sin conteo':'Diferencia: '+formatoCOP(x.diferencia)}</span>
                         </div>`).join(''):'<p class="text-xs text-stone-400">Todavía no hay cierres guardados.</p>';
                 }
@@ -1597,13 +1650,15 @@
                 if(dia.estado==='Cerrada'){alert('La caja de hoy ya fue cerrada.');return;}
                 const abiertas=(db.pedidos||[]).filter(p=>p.estado==='Abierta');
                 if(abiertas.length){alert(`No se puede cerrar la caja mientras haya ${abiertas.length} cuenta(s) de mesa abierta(s). Cobra o resuelve esas cuentas primero.`);return;}
-                const r=resumenVentasFecha(db,hoy),esperado=Number(dia.fondoInicial||0)+r.efectivo;
+                const r=resumenVentasFecha(db,hoy),esperado=Number(dia.fondoInicial||0)+r.efectivo,fiadoPendiente=(db.fiados||[]).reduce((a,f)=>a+Number(f.saldo||0),0);
                 abrirModalGeneral('Cierre de caja · '+hoy,`
                     <div class="space-y-3 text-sm">
                         <div class="rounded-xl bg-stone-50 p-4 space-y-2">
                             <div class="flex justify-between"><span>Ventas del día</span><b>${formatoCOP(r.total)}</b></div>
                             <div class="flex justify-between"><span>Ventas en efectivo</span><b>${formatoCOP(r.efectivo)}</b></div>
-                            <div class="flex justify-between"><span>Ventas con tarjeta / digital</span><b>${formatoCOP(r.tarjeta)}</b></div>
+                            <div class="flex justify-between"><span>Ventas con tarjeta</span><b>${formatoCOP(r.tarjeta)}</b></div>
+                            <div class="flex justify-between"><span>Ventas por QR</span><b>${formatoCOP(r.qr)}</b></div>
+                            <div class="flex justify-between"><span>Saldo total que sigue fiado</span><b>${formatoCOP(fiadoPendiente)}</b></div>
                             <div class="flex justify-between"><span>Fondo inicial</span><b>${formatoCOP(dia.fondoInicial||0)}</b></div>
                             <div class="flex justify-between border-t pt-2 text-emerald-800"><span class="font-bold">Efectivo esperado en caja</span><b>${formatoCOP(esperado)}</b></div>
                         </div>
