@@ -186,16 +186,10 @@
                     <button onclick="router.cambiar('recetas')" id="nav-recetas" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-book-open w-5 text-center"></i> Escandallos / Recetas
                     </button>
-                    <button onclick="router.cambiar('mermas')" id="nav-mermas" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
-                        <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i> Registro de Mermas
-                    </button>
 
                     <div class="pt-3 px-3 py-1.5 text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">Administración & Finanzas</div>
                     <button onclick="router.cambiar('caja')" id="nav-caja" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-vault w-5 text-center"></i> Arqueos y Turnos
-                    </button>
-                    <button onclick="router.cambiar('personal')" id="nav-personal" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
-                        <i class="fa-solid fa-users w-5 text-center"></i> Reloj Checador & Personal
                     </button>
                     <button onclick="router.cambiar('crm')" id="nav-crm" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-stone-800 text-stone-400 hover:text-white font-medium transition cursor-pointer text-sm">
                         <i class="fa-solid fa-address-book w-5 text-center"></i> Clientes (CRM)
@@ -440,21 +434,6 @@
                 </section>
 
                 <!-- 6. VISTA MERMAS Y DESPERDICIOS -->
-                <section id="view-mermas" class="view-section hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-lg text-stone-800">Registro de Mermas, Desperdicios y Consumo Interno</h3>
-                            <p class="text-xs text-stone-500">Control de pérdidas por roturas o café quemado.</p>
-                        </div>
-                        <button onclick="mermasController.abrirModal()" class="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Registrar Merma
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                        <div id="mermas-list" class="space-y-3"></div>
-                    </div>
-                </section>
-
                 <!-- 7. VISTA CAJA Y ARQUEOS -->
 
                 <section id="view-caja" class="view-section hidden space-y-6">
@@ -476,26 +455,33 @@
                 </section>
 
                 <!-- 8. VISTA GESTIÓN DE PERSONAL -->
-                <section id="view-personal" class="view-section hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-200 flex justify-between items-center">
-                        <div>
-                            <h3 class="font-bold text-lg text-stone-800">Reloj Checador y Control de Asistencia</h3>
-                            <p class="text-xs text-stone-500">Registro de entrada y salida de colaboradores.</p>
-                        </div>
-                        <button onclick="personalController.abrirModal()" class="cursor-pointer bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs flex items-center gap-2">
-                            <i class="fa-solid fa-user-plus"></i> Registrar Colaborador / Fichar
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
-                        <div id="personal-list" class="space-y-3"></div>
-                    </div>
-                </section>
-
-
                 <section id="view-usuarios" class="view-section hidden space-y-6">
                     <div class="rounded-2xl bg-stone-900 text-white p-6"><p class="text-xs uppercase tracking-widest text-amber-300 font-bold">Seguridad del equipo</p><h3 class="text-2xl font-black mt-1">Usuarios y permisos</h3><p class="text-sm text-stone-300 mt-2">El administrador controla qué pantallas puede abrir cada empleado. Los permisos operativos permiten tomar pedidos, cobrar, consultar mesas y ver el menú.</p></div>
-                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold">Agregar empleado</h4><p class="text-xs text-stone-500 mt-1">El administrador crea el acceso con correo y contraseña. El empleado solo podrá tomar pedidos, gestionar mesas y registrar su asistencia.</p><form onsubmit="accesoController.agregarEmpleado(event)" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3"><input id="nuevo-empleado-email" type="email" required placeholder="correo@ejemplo.com" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-nombre" type="text" required placeholder="Nombre del empleado" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><input id="nuevo-empleado-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Contraseña inicial (mínimo 8 caracteres)" class="rounded-xl border border-stone-300 px-3 py-3 text-sm"><button class="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white">Crear usuario y acceso</button></form><p class="mt-3 text-[11px] text-amber-800">La creación segura de cuentas requiere instalar la función de servidor incluida con esta actualización. La contraseña no se guarda en la base de datos de Brumas.</p></div>
-                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold mb-1">Cuentas registradas</h4><p class="text-xs text-stone-500 mb-4">Los empleados solo pueden recibir permisos para las funciones operativas. Caja diaria, reportes, costos, personal y configuración quedan reservados al administrador.</p><div id="usuarios-lista" class="space-y-4"></div></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold">Agregar empleado</h4><p class="text-xs text-stone-500 mt-1">El administrador crea el acceso con correo y contraseña. Selecciona las pantallas a las que tendrá acceso; podrás cambiar estos permisos cuando quieras.</p><form onsubmit="accesoController.agregarEmpleado(event)" class="mt-4 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input id="nuevo-empleado-email" type="email" required placeholder="correo@ejemplo.com" class="rounded-xl border border-stone-300 px-3 py-3 text-sm">
+                            <input id="nuevo-empleado-nombre" type="text" required placeholder="Nombre del empleado" class="rounded-xl border border-stone-300 px-3 py-3 text-sm">
+                            <input id="nuevo-empleado-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Contraseña inicial (mínimo 8 caracteres)" class="rounded-xl border border-stone-300 px-3 py-3 text-sm md:col-span-2">
+                        </div>
+                        <div class="rounded-xl border border-stone-200 p-4">
+                            <p class="font-bold text-sm mb-3">Permisos de acceso del empleado</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="pos" checked> Caja táctil / POS</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="mesas" checked> Salón y mesas</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="kds"> Comandera digital</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="asistencia" checked> Mi asistencia</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="productos"> Menú e insumos</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="recetas"> Recetas</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="caja"> Arqueos y turnos</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="crm"> Clientes</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="reportes"> Reportes</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="problemas"> Guía de averías</label>
+                                <label><input type="checkbox" name="nuevo-empleado-permiso" value="dashboard"> Dashboard</label>
+                            </div>
+                        </div>
+                        <button class="rounded-xl bg-amber-700 px-4 py-3 text-sm font-bold text-white">Crear usuario y acceso</button>
+                    </form><p class="mt-3 text-[11px] text-amber-800">La creación segura de cuentas requiere instalar la función de servidor incluida con esta actualización. La contraseña no se guarda en la base de datos de Brumas.</p></div>
+                    <div class="bg-white rounded-2xl border border-stone-200 p-6"><h4 class="font-bold mb-1">Cuentas registradas</h4><p class="text-xs text-stone-500 mb-4">Marca o desmarca los permisos de cada empleado. También puedes consultar aquí sus horas de entrada y salida.</p><div id="usuarios-lista" class="space-y-4"></div></div><div class="bg-white rounded-2xl border border-stone-200 p-6 mt-6"><h4 class="font-bold mb-1">Registro de entradas y salidas</h4><p class="text-xs text-stone-500 mb-3">Historial de asistencia de todos los empleados.</p><div id="admin-asistencias" class="overflow-x-auto"></div></div>
                 </section>
 
                 <!-- 9. VISTA CRM DE CLIENTES -->
@@ -584,11 +570,11 @@
     <!-- SCRIPT CENTRAL DE CONTROL -->
     <script>
 
-        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias'];
+        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias','guiaProblemas'];
         const BRUMAS_STORAGE_KEYS = {
           productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', pedidos:'cm_pedidos', kds:'cm_kds',
           mermas:'cm_mermas', recetas:'cm_recetas', personal:'cm_personal', crm:'cm_crm',
-          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias'
+          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias', guiaProblemas:'cm_guia_problemas'
         };
         const brumasSync = {
           client:null, user:null, channel:null, baseline:{}, queue:Promise.resolve(), ready:false,
@@ -599,11 +585,16 @@
           readLocal() {
             const db={};
             BRUMAS_COLLECTIONS.forEach(c=>{try{db[c]=JSON.parse(localStorage.getItem(BRUMAS_STORAGE_KEYS[c])||'[]')||[]}catch{db[c]=[]}});
-            db.guiaProblemas=[
-              {titulo:'Cafetera sin presión',solucion:'1. Comprobar nivel de caldera.\n2. Limpiar varilla de vapor.\n3. Reiniciar bomba.'},
-              {titulo:'Molino atascado',solucion:'1. Desconectar corriente.\n2. Limpiar tolva y muelas de residuos húmedos.'},
-              {titulo:'Datáfono sin red',solucion:'1. Reiniciar router Wi-Fi.\n2. Conectar a red móvil de respaldo.'}
-            ];
+            if(localStorage.getItem(BRUMAS_STORAGE_KEYS.guiaProblemas)===null){
+              db.guiaProblemas=[
+                {id:'guia-cafetera',titulo:'Cafetera sin presión',solucion:'1. Comprobar nivel de caldera.\n2. Limpiar varilla de vapor.\n3. Reiniciar bomba.'},
+                {id:'guia-molino',titulo:'Molino atascado',solucion:'1. Desconectar corriente.\n2. Limpiar tolva y muelas de residuos húmedos.'},
+                {id:'guia-datafono',titulo:'Datáfono sin red',solucion:'1. Reiniciar router Wi-Fi.\n2. Conectar a red móvil de respaldo.'}
+              ];
+              localStorage.setItem(BRUMAS_STORAGE_KEYS.guiaProblemas,JSON.stringify(db.guiaProblemas));
+            }else{
+              db.guiaProblemas=db.guiaProblemas.map((g,i)=>({...g,id:g.id??('guia-'+i+'-'+String(g.titulo||'').toLowerCase().replace(/[^a-z0-9]+/g,'-'))}));
+            }
             return db;
           },
           writeLocal(db) {
@@ -622,7 +613,16 @@
           async seedIfEmpty(local) {
             const {count,error}=await this.client.from('brumas_registros').select('*',{count:'exact',head:true});
             if(error) throw error;
-            if((count||0)>0)return false;
+            if((count||0)>0){
+              const {data:guideRows,error:guideError}=await this.client.from('brumas_registros').select('registro_id').eq('coleccion','guiaProblemas');
+              if(guideError)throw guideError;
+              if(!(guideRows||[]).length && (local.guiaProblemas||[]).length){
+                const guideSeed=local.guiaProblemas.map(item=>({coleccion:'guiaProblemas',registro_id:String(item.id),datos:item,updated_by:this.user.id}));
+                const {error:guideUpError}=await this.client.from('brumas_registros').upsert(guideSeed,{onConflict:'coleccion,registro_id'});
+                if(guideUpError)throw guideUpError;
+              }
+              return false;
+            }
             const rows=[];
             BRUMAS_COLLECTIONS.forEach(c=>(local[c]||[]).forEach(item=>{
               if(item && item.id!==undefined)rows.push({coleccion:c,registro_id:String(item.id),datos:item,updated_by:this.user.id});
@@ -678,10 +678,8 @@
               if(active==='inventario')inventarioController.render();
               if(active==='pos'){posController.renderCategorias();posController.renderGrid();posController.renderMesasSelector();}
               if(active==='mesas')mesasController.render();
-              if(active==='personal')personalController.render();
               if(active==='asistencia')asistenciaController.render();
               if(active==='crm')crmController.render();
-              if(active==='mermas')mermasController.render();
               if(active==='caja')cajaController.init();
               if(active==='usuarios')accesoController.render();
               if(active==='reportes'){reportesController.init();informeController.render();}
@@ -797,9 +795,7 @@
                     kds: 'Comanderas Digitales en Vivo',
                     productos: 'Inventario de Menú e Insumos',
                     recetas: 'Escandallos y Recetas Técnicas',
-                    mermas: 'Registro de Mermas y Desperdicios',
                     caja: 'Arqueos de Caja y Turnos',
-                    personal: 'Reloj Checador y Personal',
                     asistencia: 'Mi asistencia',
                     crm: 'Fidelización y Clientes (CRM)',
                     reportes: 'Analítica Financiera y Márgenes',
@@ -814,9 +810,7 @@
                 if(vistaId === 'kds') kdsController.render();
                 if(vistaId === 'productos') productController.render();
                 if(vistaId === 'recetas') recetasController.render();
-                if(vistaId === 'mermas') mermasController.render();
                 if(vistaId === 'caja') cajaController.init();
-                if(vistaId === 'personal') personalController.render();
                 if(vistaId === 'asistencia') asistenciaController.render();
                 if(vistaId === 'crm') crmController.render();
                 if(vistaId === 'reportes') { reportesController.init(); informeController.render(); }
@@ -1131,11 +1125,16 @@
                 }
 
                 mesa.estado = 'Esperando pedido';
+                db.kds = db.kds || [];
                 db.kds.push({
                     id: Date.now() + Math.floor(Math.random() * 1000),
                     pedidoId: pedido.id,
                     mesa: mesa.numero,
+                    mesaId: mesa.id,
                     items: carritoActual.map(i => `${i.nombre} (x${i.cantidad})`),
+                    detalle: carritoActual.map(i => ({id:i.id,nombre:i.nombre,cantidad:Number(i.cantidad)})),
+                    creadoEn: new Date().toISOString(),
+                    creadoPor: accesoController.actual?.nombre || accesoController.actual?.email || '',
                     estado: 'Pendiente',
                     tiempo: 'Nuevo'
                 });
@@ -1145,6 +1144,37 @@
                 this.renderGrid();
                 this.renderMesasSelector();
                 if (document.getElementById('view-mesas') && !document.getElementById('view-mesas').classList.contains('hidden')) mesasController.render();
+            }
+        };
+
+        const kdsController = {
+            render() {
+                const db=sistema.cargarDB(),grid=document.getElementById('kds-grid');
+                if(!grid)return;
+                db.kds=db.kds||[];
+                const activos=db.kds.filter(k=>!['Entregado','Cancelado'].includes(k.estado));
+                grid.innerHTML=activos.length?activos.map(k=>{
+                    const pedido=(db.pedidos||[]).find(p=>String(p.id)===String(k.pedidoId));
+                    const lineas=(k.detalle||pedido?.items||[]).map(i=>`<li class="flex justify-between gap-3 border-b border-stone-100 py-2"><span>${i.nombre}</span><b>x${i.cantidad}</b></li>`).join('');
+                    const items=lineas||`<li>${(k.items||[]).join('</li><li>')}</li>`;
+                    const estado=k.estado||'Pendiente';
+                    return `<article class="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
+                        <div class="flex justify-between items-start gap-2"><div><p class="text-[10px] uppercase tracking-widest text-amber-700 font-bold">Orden ${k.pedidoId||''}</p><h3 class="text-xl font-black text-stone-900 mt-1">${k.mesa||'Mesa sin asignar'}</h3></div><span class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 text-[10px] font-bold">${estado}</span></div>
+                        <ul class="mt-4 text-sm">${items}</ul>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','En preparación')" class="rounded-lg bg-amber-100 text-amber-900 px-3 py-2 text-xs font-bold">En preparación</button>
+                            <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','Listo')" class="rounded-lg bg-emerald-100 text-emerald-800 px-3 py-2 text-xs font-bold">Listo</button>
+                            <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','Entregado')" class="rounded-lg bg-stone-900 text-white px-3 py-2 text-xs font-bold">Entregado</button>
+                        </div>
+                    </article>`;
+                }).join(''):'<div class="col-span-full bg-white rounded-2xl border border-stone-200 p-8 text-center text-sm text-stone-400">No hay órdenes pendientes para cocina o barra.</div>';
+            },
+            cambiarEstado(token,estado) {
+                const id=decodeURIComponent(token),db=sistema.cargarDB();
+                const orden=(db.kds||[]).find(k=>String(k.id)===id);
+                if(!orden)return;
+                orden.estado=estado;orden.actualizadoEn=new Date().toISOString();
+                sistema.guardarDB(db);this.render();
             }
         };
 
@@ -1814,12 +1844,22 @@
                 const db = sistema.cargarDB();
                 const grid = document.getElementById('guia-rapida-grid');
                 grid.innerHTML = db.guiaProblemas.map(g => `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200 relative">
+                        <button onclick="problemasController.eliminar('${encodeURIComponent(String(g.id))}')" title="Eliminar guía" class="absolute top-3 right-3 text-stone-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash-can"></i></button>
                         <span class="text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded uppercase">Diagnóstico</span>
-                        <h4 class="font-bold text-stone-900 mt-2 text-xs">${g.titulo}</h4>
+                        <h4 class="font-bold text-stone-900 mt-2 text-xs pr-8">${g.titulo}</h4>
                         <p class="text-xs text-stone-600 mt-2 whitespace-pre-line bg-stone-50 p-3 rounded-xl border">${g.solucion}</p>
                     </div>
-                `).join('');
+                `).join('') || '<p class="text-xs text-stone-400">No hay guías registradas.</p>';
+            },
+            eliminar(token) {
+                if(!accesoController.requireAdmin())return;
+                const id=decodeURIComponent(token);
+                if(!confirm('¿Eliminar esta guía de avería?'))return;
+                const db=sistema.cargarDB();
+                db.guiaProblemas=(db.guiaProblemas||[]).filter(g=>String(g.id)!==id);
+                sistema.guardarDB(db);
+                this.init();
             },
             abrirModal() {
                 abrirModalGeneral('Reportar Falla o Avería de Equipo', `
@@ -1911,6 +1951,7 @@
         const accesoController = {
             actual: null,
             permisosEmpleadoBase: ['pos','mesas','asistencia'],
+            permisosDisponibles: [['dashboard','Dashboard'],['pos','Caja táctil / POS'],['mesas','Salón y mesas'],['kds','Comandera digital'],['asistencia','Mi asistencia'],['productos','Menú e insumos'],['recetas','Recetas'],['caja','Arqueos y turnos'],['crm','Clientes'],['reportes','Reportes'],['problemas','Guía de averías']],
             esAdmin() { return this.actual?.rol === 'admin'; },
             puede(vista) { return this.esAdmin() || (this.actual?.permisos || this.permisosEmpleadoBase).includes(vista); },
             requireAdmin() { if(this.esAdmin()) return true; alert('🔒 Esta acción solo está disponible para el administrador.'); return false; },
@@ -1926,9 +1967,7 @@
                     if(primerUsuario) alert('Este es el primer usuario registrado: se ha asignado el perfil de administrador.');
                 }
                 if(perfil.rol!=='admin'){
-                    perfil.permisos=(perfil.permisos||[]).filter(k=>this.permisosEmpleadoBase.includes(k));
-                    // En esta versión los empleados quedan limitados a pedidos, mesas y asistencia.
-                    perfil.permisos=this.permisosEmpleadoBase.slice();
+                    if(!Array.isArray(perfil.permisos))perfil.permisos=this.permisosEmpleadoBase.slice();
                     const idx=db.perfiles.findIndex(p=>String(p.email||'').toLowerCase()===email);
                     if(idx>=0)db.perfiles[idx]=perfil;
                     sistema.guardarDB(db);
@@ -1950,20 +1989,26 @@
                 if(!this.requireAdmin())return;
                 const db=sistema.cargarDB(),cont=document.getElementById('usuarios-lista');if(!cont)return;
                 const empleados=(db.perfiles||[]).filter(p=>p.rol!=='admin');
-                const opciones=[['pos','Tomar pedidos y cobrar'],['mesas','Ver y actualizar estados de mesas'],['asistencia','Registrar entrada y salida']];
                 cont.innerHTML=`<div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3"><b>Administrador:</b> ${this.actual?.email||''} · acceso completo</div>`+
                     (empleados.length?empleados.map(p=>{
                         const token=encodeURIComponent(p.email);
-                        const checks=opciones.map(([key,label])=>`<label class="flex items-center gap-2 text-xs text-stone-600"><input type="checkbox" ${(p.permisos||this.permisosEmpleadoBase).includes(key)?'checked':''} onchange="accesoController.cambiarPermiso('${token}','${key}',this.checked)"> ${label}</label>`).join('');
+                        const checks=this.permisosDisponibles.map(([key,label])=>`<label class="flex items-center gap-2 text-xs text-stone-600"><input type="checkbox" ${(p.permisos||this.permisosEmpleadoBase).includes(key)?'checked':''} onchange="accesoController.cambiarPermiso('${token}','${key}',this.checked)"> ${label}</label>`).join('');
                         const nombre=String(p.nombre||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-                        return `<div class="rounded-xl border border-stone-200 p-4"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><b class="text-sm">${nombre}</b><p class="text-xs text-stone-500">${p.email}</p></div><button onclick="accesoController.eliminarEmpleado('${token}')" class="text-xs text-red-600 font-bold">Quitar acceso</button></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">${checks}</div></div>`;
+                        return `<div class="rounded-xl border border-stone-200 p-4"><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"><div><b class="text-sm">${nombre}</b><p class="text-xs text-stone-500">${p.email}</p></div><button onclick="accesoController.eliminarEmpleado('${token}')" class="text-xs text-red-600 font-bold">Quitar acceso</button></div><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3">${checks}</div></div>`;
                     }).join(''):'<p class="text-xs text-stone-400">Aún no hay empleados agregados.</p>');
+                const asistenciaHost=document.getElementById('admin-asistencias'),dbAsis=sistema.cargarDB();
+                if(asistenciaHost){
+                    const filas=(dbAsis.asistencias||[]).slice().sort((a,b)=>String(b.entradaISO||'').localeCompare(String(a.entradaISO||'')));
+                    asistenciaHost.innerHTML=filas.length?`<table class="w-full text-left text-xs"><thead><tr class="border-b text-stone-500"><th class="p-2">Empleado</th><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th></tr></thead><tbody>${filas.map(a=>`<tr class="border-b border-stone-100"><td class="p-2 font-semibold">${a.nombre||a.email||'Empleado'}</td><td class="p-2">${a.fecha||''}</td><td class="p-2">${a.entradaTexto||'—'}</td><td class="p-2">${a.salidaTexto||'Turno activo'}</td></tr>`).join('')}</tbody></table>`:'<p class="text-xs text-stone-400">Todavía no hay registros de asistencia.</p>';
+                }
             },
             async agregarEmpleado(e) {
                 e.preventDefault();if(!this.requireAdmin())return;
                 const email=document.getElementById('nuevo-empleado-email').value.trim().toLowerCase();
                 const nombre=document.getElementById('nuevo-empleado-nombre').value.trim();
                 const password=document.getElementById('nuevo-empleado-password').value;
+                const permisos=[...document.querySelectorAll('input[name="nuevo-empleado-permiso"]:checked')].map(x=>x.value);
+                if(!permisos.length){alert('Selecciona al menos una pantalla para el empleado.');return;}
                 if(!email||!email.includes('@')){alert('Escribe un correo válido.');return;}
                 if(password.length<8){alert('La contraseña debe tener al menos 8 caracteres.');return;}
                 const db=sistema.cargarDB();db.perfiles=db.perfiles||[];
@@ -1972,7 +2017,7 @@
                     const {data:{session}}=await brumasSync.client.auth.getSession();
                     const {data,error}=await brumasSync.client.functions.invoke('crear-empleado',{body:{email,nombre,password},headers:{Authorization:`Bearer ${session?.access_token||''}`}});
                     if(error)throw error;if(data?.error)throw new Error(data.error);
-                    db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos:this.permisosEmpleadoBase.slice(),creadoEn:new Date().toISOString()});
+                    db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos,creadoEn:new Date().toISOString()});
                     sistema.guardarDB(db);e.target.reset();this.render();
                     alert('Usuario creado correctamente. Ya puede ingresar con su correo y contraseña.');
                 }catch(err){console.error(err);alert('No se pudo crear la cuenta. Verifica que esté instalada la función segura crear-empleado en Supabase. Detalle: '+(err.message||err));}
@@ -2025,7 +2070,9 @@
               accesoController.iniciar(user);
               protegerAccionesProducto();
               document.getElementById('app').classList.remove('hidden');
-              dashboardController.init();verificarStockBajoGlobal();
+              const inicio=accesoController.esAdmin()?'dashboard':['pos','mesas','kds','asistencia','productos','recetas','crm','problemas','caja','reportes','dashboard'].find(v=>accesoController.puede(v))||'pos';
+              router.cambiar(inicio);
+              verificarStockBajoGlobal();
               cajaController.asegurarDiaActual();
               const dateInput=document.getElementById('report-date');
               if(dateInput&&!dateInput.value){dateInput.value=new Date().toISOString().slice(0,10);dateInput.addEventListener('change',()=>informeController.render());}
