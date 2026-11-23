@@ -42,19 +42,6 @@
         }
 
         button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; }
-        /* Selector de destino del POS: conserva el menú nativo y permite abrirlo con toque. */
-        #pos-destino-select {
-            display: block;
-            width: 100%;
-            min-height: 48px;
-            font-size: 16px;
-            line-height: 1.25;
-            appearance: auto;
-            -webkit-appearance: menulist;
-            pointer-events: auto;
-            position: relative;
-            z-index: 2;
-        }
         .view-section {
             animation: fadeIn var(--transition-speed) ease-in-out;
         }
@@ -130,6 +117,9 @@
             #brumas-sidebar { flex-shrink: 0; }
             #mobile-nav-toggle { display: none !important; }
         }
+
+        /* Selector de destino del POS: menú nativo compatible con toque en móviles. */
+        #pos-destino-select { display:block; width:100%; min-height:48px; font-size:16px; line-height:1.25; appearance:auto; -webkit-appearance:menulist; pointer-events:auto; position:relative; z-index:2; }
 
         /* RESPONSIVE UNIVERSAL: evita que formularios, listas y acciones queden cortados */
         html { scroll-behavior: smooth; }
@@ -1043,17 +1033,9 @@
                 this.renderGrid();
                 this.renderCarrito();
                 this.renderMesasSelector();
-                this.renderDestinoSelector();
+                const destino = document.getElementById('pos-destino-select');
+                if (destino) { const seleccionado=destino.value; destino.innerHTML=configuracionController.destinosHtml(); if(seleccionado && Array.from(destino.options).some(o=>o.value===seleccionado)) destino.value=seleccionado; }
                 verificarStockBajoGlobal();
-            },
-            renderDestinoSelector() {
-                const select = document.getElementById('pos-destino-select');
-                if (!select) return;
-                const selected = select.value;
-                select.innerHTML = configuracionController.destinosHtml();
-                if (selected && Array.from(select.options).some(option => option.value === selected)) {
-                    select.value = selected;
-                }
             },
             renderMesasSelector() {
                 const select = document.getElementById('pos-mesa-select');
@@ -1281,12 +1263,22 @@
                     estado: 'Pendiente',
                     tiempo: 'Nuevo'
                 });
+                let fiadoCreado = null;
+                if (destinoTipo === 'fiado') {
+                    db.fiados = db.fiados || [];
+                    const amigo = Number(destinoNumero || 1);
+                    fiadoCreado = { id:'F-'+pedido.id, amigo, pedidoId:pedido.id, mesa:pedido.mesaNumero, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), saldo:Number(pedido.total), fecha:new Date().toLocaleString(), estado:'Pendiente', abonos:[] };
+                    if (!(db.fiados||[]).some(f=>String(f.pedidoId)===String(pedido.id))) db.fiados.push(fiadoCreado);
+                    pedido.estado='Fiado'; pedido.fiadoAmigo=amigo; pedido.fechaFiado=fiadoCreado.fecha;
+                    mesa.estado='Ocupada';
+                } else { mesa.estado='Esperando pedido'; }
                 sistema.guardarDB(db);
-                alert(`Pedido enviado a ${mesa.numero}.\\nTotal acumulado: ${formatoCOP(pedido.total)}\\nLa cuenta queda abierta; todavía no se ha cobrado.`);
-                this.limpiarCarrito();
-                this.renderGrid();
-                this.renderMesasSelector();
+                this.limpiarCarrito(); this.renderGrid(); this.renderMesasSelector();
                 if (document.getElementById('view-mesas') && !document.getElementById('view-mesas').classList.contains('hidden')) mesasController.render();
+                if (fiadoCreado) { fiadosController.render(); fiadosController.mostrarAviso(fiadoCreado); }
+                else alert(`Pedido enviado a ${mesa.numero}.
+Total acumulado: ${formatoCOP(pedido.total)}
+La cuenta queda abierta; todavía no se ha cobrado.`);
             }
         };
 
@@ -1408,13 +1400,18 @@
                 const mesa = db.mesas.find(m => String(m.id) === String(pedido.mesaId));
                 const ahora = new Date().toLocaleString();
                 if (pedido.destinoTipo === 'fiado') {
+                    // Compatibilidad con cuentas antiguas abiertas antes de esta actualización.
                     db.fiados = db.fiados || [];
                     const amigo = Number(pedido.destinoNumero || 1);
-                    db.fiados.push({ id:'F-'+Date.now(), amigo, pedidoId:pedido.id, mesa:pedido.mesaNumero, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), saldo:Number(pedido.total), fecha:ahora, estado:'Pendiente', abonos:[] });
+                    let fiado = db.fiados.find(f=>String(f.pedidoId)===String(pedido.id));
+                    if (!fiado) {
+                        fiado = { id:'F-'+pedido.id, amigo, pedidoId:pedido.id, mesa:pedido.mesaNumero, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), saldo:Number(pedido.total), fecha:ahora, estado:'Pendiente', abonos:[] };
+                        db.fiados.push(fiado);
+                    }
                     pedido.estado='Fiado'; pedido.fiadoAmigo=amigo; pedido.fechaFiado=ahora;
-                    if (mesa) mesa.estado='Libre';
+                    if (mesa) mesa.estado='Ocupada';
                     sistema.guardarDB(db); cerrarModalGeneral(); this.render(); posController.renderMesasSelector(); fiadosController.render();
-                    abrirModalGeneral('Fiado registrado', `<div class="space-y-3 text-sm"><p>La cuenta de <b>${pedido.mesaNumero}</b> quedó registrada a nombre de <b>Amigo ${amigo}</b>.</p><p class="text-xl font-black text-amber-700">${formatoCOP(pedido.total)}</p><p class="text-xs text-stone-500">El saldo aparecerá en el apartado de fiados y no se contará como venta pagada hasta recibir el dinero.</p><button onclick="cerrarModalGeneral()" class="w-full rounded-xl bg-stone-900 text-white py-3 text-xs font-bold">Aceptar</button></div>`);
+                    fiadosController.mostrarAviso(fiado);
                     return;
                 }
                 const venta = { id:'V-'+Date.now().toString().slice(-6), fecha:ahora, items:pedido.items.map(i=>({...i})), total:Number(pedido.total), metodoPago:metodo, mesa:pedido.mesaNumero, pedidoId:pedido.id, cajaNumero:Number(pedido.destinoNumero||1) };
@@ -1687,10 +1684,12 @@
         }
         function resumenVentasFecha(db, fecha) {
             const ventas = (db.ventas || []).filter(v => fechaISORegistro(v.fecha) === fecha);
-            const efectivo = ventas.filter(v => v.metodoPago === 'Efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
-            const tarjeta = ventas.filter(v => v.metodoPago === 'Tarjeta').reduce((a,v) => a + Number(v.total || 0), 0);
-            const qr = ventas.filter(v => v.metodoPago === 'QR').reduce((a,v) => a + Number(v.total || 0), 0);
-            return { ventas, efectivo, tarjeta, qr, total: efectivo + tarjeta + qr };
+            const efectivo = ventas.filter(v => String(v.metodoPago || '').toLowerCase() === 'efectivo').reduce((a,v) => a + Number(v.total || 0), 0);
+            const tarjeta = ventas.filter(v => String(v.metodoPago || '').toLowerCase() === 'tarjeta').reduce((a,v) => a + Number(v.total || 0), 0);
+            const qr = ventas.filter(v => String(v.metodoPago || '').toLowerCase() === 'qr').reduce((a,v) => a + Number(v.total || 0), 0);
+            const total = ventas.reduce((a,v) => a + Number(v.total || 0), 0);
+            const otros = Math.max(0, total - efectivo - tarjeta - qr);
+            return { ventas, efectivo, tarjeta, qr, otros, total };
         }
         function textoRecibo(venta) {
             const lineas=(venta.items||[]).map(i=>`${i.nombre} x${i.cantidad} — ${formatoCOP(Number(i.precio)*Number(i.cantidad))}`).join('\n');
@@ -1703,6 +1702,27 @@
         const recibosController = { compartir(id) { const db=sistema.cargarDB(),v=(db.ventas||[]).find(x=>String(x.id)===String(id));if(!v)return;const campo=document.getElementById('recibo-whatsapp-numero');let numero=String(campo?.value||'').replace(/\D/g,'');if(numero.length===10)numero='57'+numero;if(numero.length<11||numero.length>15){alert('Escribe un número válido con indicativo de país. Para Colombia puedes escribir los 10 dígitos del celular.');campo?.focus();return;}window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(textoRecibo(v)),'_blank'); } };
 
         const fiadosController = {
+            textoAviso(f) {
+                const lineas=(f.items||[]).map(i=>`${i.nombre} x${i.cantidad} — ${formatoCOP(Number(i.precio||0)*Number(i.cantidad||0))}`).join('\n');
+                return `BRUMAS CAFÉ · CUENTA DE FIADO\nCuenta: Amigo ${f.amigo}\nMesa: ${f.mesa||'Sin mesa'}\nFecha: ${f.fecha||''}\n\nProductos consumidos:\n${lineas}\n\nTOTAL DEL FIADO: ${formatoCOP(f.total)}\nSaldo pendiente: ${formatoCOP(f.saldo)}\n\nEste consumo quedó registrado como fiado.`;
+            },
+            mostrarAviso(f) {
+                const mensaje=this.textoAviso(f);
+                abrirModalGeneral('Fiado guardado correctamente', `<div class="space-y-3 text-sm"><p>El consumo de <b>Amigo ${f.amigo}</b> quedó guardado en Cuentas de fiado. La mesa permanece <b>Ocupada</b> hasta que el empleado la marque como libre.</p><div class="rounded-xl bg-amber-50 p-3"><p class="font-black text-xl text-amber-800">${formatoCOP(f.total)}</p><p class="text-xs text-stone-600">${(f.items||[]).map(i=>`${i.nombre} x${i.cantidad}`).join(', ')}</p></div><label class="block text-xs font-bold">Número de WhatsApp para enviarte el resumen (opcional)<input id="fiado-whatsapp-numero" type="tel" inputmode="tel" placeholder="3001234567 o 573001234567" class="mt-1 w-full rounded-xl border px-3 py-3 text-sm"></label><button onclick="fiadosController.compartirAviso('${f.id}')" class="w-full rounded-xl bg-emerald-600 text-white py-3 text-xs font-bold"><i class="fa-brands fa-whatsapp mr-2"></i>Enviar resumen por WhatsApp</button><button onclick="fiadosController.copiarAviso('${f.id}')" class="w-full rounded-xl border py-3 text-xs font-bold">Copiar resumen</button><button onclick="cerrarModalGeneral()" class="w-full rounded-xl bg-stone-900 text-white py-3 text-xs font-bold">Cerrar</button></div>`);
+            },
+            compartirAviso(id) {
+                const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
+                const campo=document.getElementById('fiado-whatsapp-numero');let numero=String(campo?.value||'').replace(/\D/g,'');
+                if(numero.length===10)numero='57'+numero;
+                if(numero.length<11||numero.length>15){alert('Escribe un número válido. Para Colombia puedes escribir los 10 dígitos del celular.');campo?.focus();return;}
+                window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(this.textoAviso(f)),'_blank');
+            },
+            copiarAviso(id) {
+                const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
+                const texto=this.textoAviso(f),area=document.createElement('textarea');area.value=texto;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();
+                try { document.execCommand('copy'); alert('Resumen copiado. Ya puedes pegarlo en WhatsApp.'); } catch(e) { alert('No se pudo copiar automáticamente.'); }
+                area.remove();
+            },
             render() {
                 const db=sistema.cargarDB(); db.fiados=db.fiados||[];
                 const resumen=document.getElementById('fiados-resumen'),detalle=document.getElementById('fiados-detalle');
