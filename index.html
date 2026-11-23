@@ -246,6 +246,7 @@
                     </div>
                     <!-- Sesión: ahora ocupa espacio propio y no tapa el reloj -->
                     <div id="brumas-session-tools" class="flex items-center gap-2 min-w-0">
+                        <button id="brumas-admin-options" onclick="configuracionController.abrir()" class="hidden shrink-0 rounded-full bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-amber-700"><i class="fa-solid fa-sliders mr-1"></i><span class="hidden sm:inline">Administrar</span></button>
                         <span id="brumas-user-email" class="hidden lg:inline-block max-w-[180px] truncate rounded-full bg-white px-3 py-2 text-[10px] font-bold text-stone-600 shadow"></span>
                         <button onclick="brumasSync.signOut()" class="shrink-0 rounded-full bg-stone-900 px-3 py-2 text-[10px] font-bold text-white shadow hover:bg-stone-700" aria-label="Cerrar sesión"><i class="fa-solid fa-right-from-bracket mr-1"></i><span class="hidden sm:inline">Salir</span></button>
                     </div>
@@ -338,8 +339,7 @@
                                 </select>
                                 <label for="pos-destino-select" class="block text-[10px] font-extrabold uppercase tracking-wider text-stone-500 mt-2">Registrar consumo en una caja o fiado</label>
                                 <select id="pos-destino-select" class="w-full px-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-stone-700">
-                                    <optgroup label="Cajas"><option value="caja:1">Caja 1</option><option value="caja:2">Caja 2</option><option value="caja:3">Caja 3</option><option value="caja:4">Caja 4</option><option value="caja:5">Caja 5</option><option value="caja:6">Caja 6</option><option value="caja:7">Caja 7</option><option value="caja:8">Caja 8</option></optgroup>
-                                    <optgroup label="Fiados a amigos"><option value="fiado:1">Fiado · Amigo 1</option><option value="fiado:2">Fiado · Amigo 2</option><option value="fiado:3">Fiado · Amigo 3</option><option value="fiado:4">Fiado · Amigo 4</option></optgroup>
+                                    ${configuracionController.destinosHtml()}
                                 </select>
                                 <button onclick="posController.enviarPedido()" class="w-full cursor-pointer bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
                                     <i class="fa-solid fa-paper-plane"></i> Enviar pedido · Dejar cuenta abierta
@@ -577,11 +577,11 @@
     <!-- SCRIPT CENTRAL DE CONTROL -->
     <script>
 
-        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias','guiaProblemas','fiados'];
+        const BRUMAS_COLLECTIONS = ['productos','mesas','ventas','pedidos','kds','mermas','recetas','personal','crm','problemas','arqueos','cierresCaja','perfiles','asistencias','guiaProblemas','fiados','configuracion'];
         const BRUMAS_STORAGE_KEYS = {
           productos:'cm_productos', mesas:'cm_mesas', ventas:'cm_ventas', pedidos:'cm_pedidos', kds:'cm_kds',
           mermas:'cm_mermas', recetas:'cm_recetas', personal:'cm_personal', crm:'cm_crm',
-          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias', guiaProblemas:'cm_guia_problemas', fiados:'cm_fiados'
+          problemas:'cm_problemas', arqueos:'cm_arqueos', cierresCaja:'cm_cierres_caja', perfiles:'cm_perfiles', asistencias:'cm_asistencias', guiaProblemas:'cm_guia_problemas', fiados:'cm_fiados', configuracion:'cm_configuracion'
         };
         const brumasSync = {
           client:null, user:null, channel:null, baseline:{}, queue:Promise.resolve(), ready:false,
@@ -592,6 +592,14 @@
           readLocal() {
             const db={};
             BRUMAS_COLLECTIONS.forEach(c=>{try{db[c]=JSON.parse(localStorage.getItem(BRUMAS_STORAGE_KEYS[c])||'[]')||[]}catch{db[c]=[]}});
+            if(!db.configuracion.length){
+              db.configuracion=[{id:'catalogo-principal',categorias:['Bebidas Calientes','Bebidas Frías','Coctelería','Panadería','Platos Fuertes'],
+                leches:[{nombre:'Leche Entera',extra:0},{nombre:'Leche Deslactosada',extra:0},{nombre:'Leche de Almendras',extra:500},{nombre:'Leche de Avena',extra:500}],
+                azucares:['Normal','Poco Azúcar','Sin Azúcar'],zonas:['Salón Principal','Terraza','Barra'],
+                metodosPago:['Efectivo','Tarjeta','QR'],rolesPersonal:['Barista Principal','Mesero / Salón','Cajero','Encargado de Turno'],
+                estadosTurno:['En Turno','Descanso','Fuera de Turno'],cajas:8,fiados:4}];
+              localStorage.setItem(BRUMAS_STORAGE_KEYS.configuracion,JSON.stringify(db.configuracion));
+            }
             if(localStorage.getItem(BRUMAS_STORAGE_KEYS.guiaProblemas)===null){
               db.guiaProblemas=[
                 {id:'guia-cafetera',titulo:'Cafetera sin presión',solucion:'1. Comprobar nivel de caldera.\n2. Limpiar varilla de vapor.\n3. Reiniciar bomba.'},
@@ -941,13 +949,13 @@
             },
             renderCategorias() {
                 const db = sistema.cargarDB();
-                const categorias = ['Todos', ...new Set(db.productos.map(p => p.categoria))];
+                const catalogo=configuracionController.get().categorias||[]; const categorias = ['Todos', ...new Set([...catalogo,...db.productos.map(p => p.categoria)].filter(Boolean))];
                 const container = document.getElementById('pos-categorias');
                 container.innerHTML = categorias.map(cat => `
-                    <button onclick="posController.filtrarCategoria('${cat}')" class="cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${categoriaFiltroActiva === cat ? 'bg-amber-600 text-white shadow-xs' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}">
+                    <button onclick="posController.filtrarCategoria('${String(cat).replace(/'/g,"\\\\'")}')" class="cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${categoriaFiltroActiva === cat ? 'bg-amber-600 text-white shadow-xs' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}">
                         ${cat}
                     </button>
-                `).join('');
+                `).join('') + (accesoController.esAdmin()?'<button onclick="configuracionController.abrir()" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200"><i class="fa-solid fa-plus"></i> Administrar</button>':'');
             },
             filtrarCategoria(cat) {
                 categoriaFiltroActiva = cat;
@@ -1000,18 +1008,13 @@
                             <div>
                                 <label class="block font-bold text-stone-500 uppercase mb-1">Tipo de Leche</label>
                                 <select id="mod-leche" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl">
-                                    <option value="Leche Entera">Leche Entera (Estándar)</option>
-                                    <option value="Leche Deslactosada">Leche Deslactosada</option>
-                                    <option value="Leche de Almendras (+500 COP)">Leche de Almendras (+$500)</option>
-                                    <option value="Leche de Avena (+500 COP)">Leche de Avena (+$500)</option>
+                                    ${configuracionController.lechesHtml()}
                                 </select>
                             </div>
                             <div>
                                 <label class="block font-bold text-stone-500 uppercase mb-1">Nivel de Azúcar</label>
                                 <select id="mod-azucar" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl">
-                                    <option value="Normal">Normal</option>
-                                    <option value="Poco Azúcar">Poco Azúcar</option>
-                                    <option value="Sin Azúcar">Sin Azúcar</option>
+                                    ${configuracionController.simpleOptionsHtml('azucares')}
                                 </select>
                             </div>
                             <div class="flex justify-end gap-2 pt-3 border-t">
@@ -1042,7 +1045,7 @@
             agregarConModificadores(id) {
                 const leche = document.getElementById('mod-leche').value;
                 const azucar = document.getElementById('mod-azucar').value;
-                const extraPrecio = (leche.includes('Almendras') || leche.includes('Avena')) ? 500 : 0;
+                const extraPrecio = Number(document.getElementById('mod-leche').selectedOptions[0]?.dataset.extra || 0);
                 cerrarModalGeneral();
                 this.agregarDirecto(id, `${leche}, ${azucar}`, extraPrecio);
             },
@@ -1184,6 +1187,7 @@
                             <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','En preparación')" class="rounded-lg bg-amber-100 text-amber-900 px-3 py-2 text-xs font-bold">En preparación</button>
                             <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','Listo')" class="rounded-lg bg-emerald-100 text-emerald-800 px-3 py-2 text-xs font-bold">Listo</button>
                             <button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','Entregado')" class="rounded-lg bg-stone-900 text-white px-3 py-2 text-xs font-bold">Entregado</button>
+                            ${accesoController.esAdmin()?`<button onclick="kdsController.cambiarEstado('${encodeURIComponent(String(k.id))}','Cancelado')" class="rounded-lg bg-red-100 text-red-800 px-3 py-2 text-xs font-bold">Cancelar orden</button>`:''}
                         </div>
                     </article>`;
                 }).join(''):'<div class="col-span-full bg-white rounded-2xl border border-stone-200 p-8 text-center text-sm text-stone-400">No hay órdenes pendientes para cocina o barra.</div>';
@@ -1219,7 +1223,7 @@
                     return `
                         <div class="p-5 rounded-2xl border transition flex flex-col justify-between shadow-xs ${colorClase} hover:shadow-md">
                             <div onclick="mesasController.verCuenta(${m.id})" class="cursor-pointer">
-                                <div class="flex justify-between items-center"><span class="text-[10px] font-extrabold uppercase tracking-wider">${m.zona}</span><span class="w-3 h-3 rounded-full ${dotClase}"></span></div>
+                                <div class="flex justify-between items-center gap-2"><span class="text-[10px] font-extrabold uppercase tracking-wider">${m.zona}</span><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full ${dotClase}"></span><button type="button" onclick="event.stopPropagation();mesasController.eliminarMesa(${m.id})" title="Eliminar mesa" aria-label="Eliminar mesa" class="w-8 h-8 rounded-lg bg-white/80 border border-current/20 text-stone-500 hover:text-red-600 hover:bg-red-50"><i class="fa-solid fa-trash-can"></i></button></div></div>
                                 <div class="my-3"><h4 class="font-extrabold text-base">${m.numero}</h4><span class="text-xs font-bold mt-1 block">Estado: ${estado}</span>${resumen}</div>
                             </div>
                             <button onclick="mesasController.avanzarEstado(${m.id})" class="mt-2 rounded-xl bg-white/80 border border-current/20 px-3 py-2 text-[11px] font-extrabold hover:bg-white">${estado==='Esperando pedido'?'Marcar pedido entregado · Ocupada':estado==='Ocupada'?'Marcar cuenta pedida':estado==='Cuenta pedida'?'Marcar mesa libre':'Cambiar estado'}</button>
@@ -1266,9 +1270,7 @@
                         </div>
                         <div class="rounded-xl bg-stone-50 p-3 text-xs text-stone-600">Destino: <b>${pedido.destinoTipo==='fiado'?'Fiado · Amigo '+pedido.destinoNumero:'Caja '+(pedido.destinoNumero||1)}</b></div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
-                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Efectivo')" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-money-bill-wave mr-1"></i> Dinero</button>
-                            <button onclick="mesasController.cobrarPedido('${pedido.id}','Tarjeta')" class="bg-stone-900 hover:bg-stone-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-credit-card mr-1"></i> Tarjeta</button>
-                            <button onclick="mesasController.cobrarPedido('${pedido.id}','QR')" class="bg-violet-700 hover:bg-violet-800 text-white rounded-xl py-2.5 text-xs font-bold"><i class="fa-solid fa-qrcode mr-1"></i> QR</button>
+                            ${configuracionController.get().metodosPago.map((metodo,idx)=>`<button onclick="mesasController.cobrarPedido('${pedido.id}','${configuracionController.esc(metodo)}')" class="${['bg-emerald-700','bg-stone-900','bg-violet-700'][idx%3]} text-white rounded-xl py-2.5 text-xs font-bold">${configuracionController.esc(metodo)}</button>`).join('')}
                         </div>
                         <p class="text-[10px] text-stone-400 text-center">La mesa se liberará automáticamente al registrar el pago.</p>
                     </div>
@@ -1325,6 +1327,19 @@
                     this.render();
                     posController.renderMesasSelector();
                 }
+            },
+            eliminarMesa(id) {
+                if (!accesoController.esAdmin()) { alert('Solo el administrador puede eliminar mesas.'); return; }
+                const db = sistema.cargarDB();
+                const mesa = (db.mesas || []).find(m => String(m.id) === String(id));
+                if (!mesa) return;
+                const pedido = this.pedidoAbierto(db, id);
+                if (pedido) { alert('No puedes eliminar esta mesa porque tiene una cuenta abierta. Cobra o cierra la cuenta primero.'); return; }
+                if (!confirm(`¿Eliminar ${mesa.numero}? Esta acción no se puede deshacer.`)) return;
+                db.mesas = (db.mesas || []).filter(m => String(m.id) !== String(id));
+                sistema.guardarDB(db);
+                this.render();
+                posController.renderMesasSelector();
             }
         };
 
@@ -1356,11 +1371,7 @@
                             <div>
                                 <label class="block font-bold text-stone-500 uppercase mb-1">Categoría</label>
                                 <select id="form-prod-cat" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                    <option value="Bebidas Calientes">Bebidas Calientes</option>
-                                    <option value="Bebidas Frías">Bebidas Frías</option>
-                                    <option value="Coctelería">Coctelería</option>
-                                    <option value="Panadería">Panadería</option>
-                                    <option value="Platos Fuertes">Platos Fuertes</option>
+                                    ${configuracionController.simpleOptionsHtml('categorias')}
                                 </select>
                             </div>
                             <div>
@@ -1436,8 +1447,9 @@
                             <p class="text-xs text-stone-500 mb-3">Escandallo estándar de ingredientes</p>
                             <p class="text-xs text-stone-700 bg-stone-50 p-3 rounded-xl border whitespace-pre-line">${r.desc}</p>
                         </div>
-                        <div class="mt-4 pt-3 border-t flex justify-end">
-                            <button onclick="recetasController.eliminar(${r.id})" class="cursor-pointer text-xs text-red-500 hover:text-red-700 font-bold"><i class="fa-solid fa-trash-can mr-1"></i> Eliminar Receta</button>
+                        <div class="mt-4 pt-3 border-t flex justify-end gap-3">
+                            <button onclick="recetasController.editar(${r.id})" class="cursor-pointer text-xs text-blue-600 font-bold"><i class="fa-solid fa-pen mr-1"></i> Editar</button>
+                            <button onclick="recetasController.eliminar(${r.id})" class="cursor-pointer text-xs text-red-500 hover:text-red-700 font-bold"><i class="fa-solid fa-trash-can mr-1"></i> Eliminar</button>
                         </div>
                     </div>
                 `).join('');
@@ -1473,6 +1485,13 @@
                 this.render();
                 alert('Receta técnica configurada con éxito.');
             },
+            editar(id) {
+                const db=sistema.cargarDB(),r=db.recetas.find(x=>String(x.id)===String(id));if(!r)return;
+                const nombre=prompt('Nombre de la receta:',r.nombre);if(nombre===null)return;
+                const desc=prompt('Ingredientes y cantidades:',r.desc);if(desc===null)return;
+                if(!nombre.trim()||!desc.trim()){alert('Completa nombre e ingredientes.');return;}
+                r.nombre=nombre.trim();r.desc=desc.trim();sistema.guardarDB(db);this.render();
+            },
             eliminar(id) {
                 if(confirm('¿Eliminar esta receta técnica?')) {
                     let db = sistema.cargarDB();
@@ -1491,7 +1510,7 @@
                 list.innerHTML = db.mermas.map(m => `
                     <div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border text-xs">
                         <div><strong class="text-stone-800">${m.desc}</strong> <span class="text-stone-400 ml-2">(${m.fecha})</span></div>
-                        <span class="font-extrabold text-red-600">-${formatoCOP(m.costo)}</span>
+                        <div class="flex items-center gap-3"><span class="font-extrabold text-red-600">-${formatoCOP(m.costo)}</span><button onclick="mermasController.editar(${m.id})" class="text-blue-600" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="mermasController.eliminar(${m.id})" class="text-red-600" title="Eliminar"><i class="fa-solid fa-trash"></i></button></div>
                     </div>
                 `).join('');
             },
@@ -1512,6 +1531,17 @@
                         </div>
                     </form>
                 `);
+            },
+            editar(id) {
+                const db=sistema.cargarDB(),m=db.mermas.find(x=>String(x.id)===String(id));if(!m)return;
+                const desc=prompt('Descripción de la merma:',m.desc);if(desc===null)return;
+                const costo=prompt('Costo estimado:',m.costo);if(costo===null)return;
+                if(!desc.trim()||!Number.isFinite(Number(costo))||Number(costo)<0){alert('Datos inválidos.');return;}
+                m.desc=desc.trim();m.costo=Number(costo);sistema.guardarDB(db);this.render();
+            },
+            eliminar(id) {
+                if(!confirm('¿Eliminar este registro de merma?'))return;
+                const db=sistema.cargarDB();db.mermas=db.mermas.filter(x=>String(x.id)!==String(id));sistema.guardarDB(db);this.render();
             },
             guardar(e) {
                 e.preventDefault();
@@ -1547,22 +1577,22 @@
         }
         function mostrarRecibo(venta) {
             const lineas=(venta.items||[]).map(i=>`<div class="flex justify-between gap-3 border-b py-2 text-xs"><span>${i.nombre} × ${i.cantidad}</span><b>${formatoCOP(Number(i.precio)*Number(i.cantidad))}</b></div>`).join('');
-            abrirModalGeneral('Recibo de compra', `<div class="space-y-3"><div class="rounded-xl border border-dashed border-stone-300 p-4"><div class="text-center"><h3 class="font-black text-lg">BRUMAS CAFÉ</h3><p class="text-xs text-stone-500">¡Gracias por tu compra!</p><p class="text-[10px] text-stone-400 mt-1">${venta.fecha||''} · ${venta.mesa||''}</p></div><div class="mt-3">${lineas}</div><div class="flex justify-between border-t mt-3 pt-3 text-base font-black"><span>TOTAL</span><span class="text-amber-700">${formatoCOP(venta.total)}</span></div><p class="text-[11px] text-stone-500 mt-2">Método de pago: ${venta.metodoPago}</p><p class="text-center text-xs font-semibold mt-3">¡Esperamos verte pronto!</p></div><button onclick="recibosController.compartir('${venta.id}')" class="w-full rounded-xl bg-emerald-600 text-white py-3 text-xs font-bold"><i class="fa-brands fa-whatsapp mr-2"></i>Enviar recibo por WhatsApp</button><button onclick="cerrarModalGeneral()" class="w-full rounded-xl border py-3 text-xs font-bold">No enviar · Cerrar recibo <i class="fa-solid fa-xmark ml-1"></i></button></div>`);
+            abrirModalGeneral('Recibo de compra', `<div class="space-y-3"><div class="rounded-xl border border-dashed border-stone-300 p-4"><div class="text-center"><h3 class="font-black text-lg">BRUMAS CAFÉ</h3><p class="text-xs text-stone-500">¡Gracias por tu compra!</p><p class="text-[10px] text-stone-400 mt-1">${venta.fecha||''} · ${venta.mesa||''}</p></div><div class="mt-3">${lineas}</div><div class="flex justify-between border-t mt-3 pt-3 text-base font-black"><span>TOTAL</span><span class="text-amber-700">${formatoCOP(venta.total)}</span></div><p class="text-[11px] text-stone-500 mt-2">Método de pago: ${venta.metodoPago}</p><p class="text-center text-xs font-semibold mt-3">¡Esperamos verte pronto!</p></div><label class="block text-xs font-bold text-stone-700">Número de WhatsApp del cliente</label><input id="recibo-whatsapp-numero" type="tel" inputmode="tel" placeholder="Ej. 3001234567 o 573001234567" class="w-full rounded-xl border border-stone-300 px-3 py-3 text-sm" /><p class="text-[10px] text-stone-500">Si escribes un número colombiano de 10 dígitos, agregaremos +57 automáticamente.</p><button onclick="recibosController.compartir('${venta.id}')" class="w-full rounded-xl bg-emerald-600 text-white py-3 text-xs font-bold"><i class="fa-brands fa-whatsapp mr-2"></i>Enviar recibo por WhatsApp</button><button onclick="cerrarModalGeneral()" class="w-full rounded-xl border py-3 text-xs font-bold">No enviar · Cerrar recibo <i class="fa-solid fa-xmark ml-1"></i></button></div>`);
         }
-        const recibosController = { compartir(id) { const db=sistema.cargarDB(),v=(db.ventas||[]).find(x=>String(x.id)===String(id));if(!v)return;window.open('https://wa.me/?text='+encodeURIComponent(textoRecibo(v)),'_blank'); } };
+        const recibosController = { compartir(id) { const db=sistema.cargarDB(),v=(db.ventas||[]).find(x=>String(x.id)===String(id));if(!v)return;const campo=document.getElementById('recibo-whatsapp-numero');let numero=String(campo?.value||'').replace(/\D/g,'');if(numero.length===10)numero='57'+numero;if(numero.length<11||numero.length>15){alert('Escribe un número válido con indicativo de país. Para Colombia puedes escribir los 10 dígitos del celular.');campo?.focus();return;}window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(textoRecibo(v)),'_blank'); } };
 
         const fiadosController = {
             render() {
                 const db=sistema.cargarDB(); db.fiados=db.fiados||[];
                 const resumen=document.getElementById('fiados-resumen'),detalle=document.getElementById('fiados-detalle');
                 if(!resumen||!detalle)return;
-                resumen.innerHTML=[1,2,3,4].map(n=>{const rows=db.fiados.filter(f=>Number(f.amigo)===n&&Number(f.saldo)>0);const saldo=rows.reduce((a,f)=>a+Number(f.saldo||0),0);return `<div class="rounded-xl border border-amber-100 bg-amber-50 p-4"><p class="text-xs font-bold text-stone-600">Amigo ${n}</p><p class="text-lg font-black text-amber-800 mt-1">${formatoCOP(saldo)}</p><p class="text-[10px] text-stone-500">${rows.length} cuenta(s) pendiente(s)</p></div>`;}).join('');
+                const maxAmigos=Math.max(Number(configuracionController.get().fiados)||1,...(db.fiados||[]).map(f=>Number(f.amigo)||0));resumen.innerHTML=Array.from({length:maxAmigos},(_,i)=>i+1).map(n=>{const rows=db.fiados.filter(f=>Number(f.amigo)===n&&Number(f.saldo)>0);const saldo=rows.reduce((a,f)=>a+Number(f.saldo||0),0);return `<div class="rounded-xl border border-amber-100 bg-amber-50 p-4"><p class="text-xs font-bold text-stone-600">Amigo ${n}</p><p class="text-lg font-black text-amber-800 mt-1">${formatoCOP(saldo)}</p><p class="text-[10px] text-stone-500">${rows.length} cuenta(s) pendiente(s)</p></div>`;}).join('');
                 const pendientes=db.fiados.filter(f=>Number(f.saldo)>0);
                 detalle.innerHTML=pendientes.length?pendientes.map(f=>`<div class="border rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3"><div><b class="text-sm">Amigo ${f.amigo} · ${f.mesa||'Consumo'}</b><p class="text-[10px] text-stone-500">${f.fecha} · Cuenta ${f.pedidoId}</p><p class="text-xs text-stone-600 mt-1">${(f.items||[]).map(i=>`${i.nombre} x${i.cantidad}`).join(', ')}</p><p class="text-xs mt-1">Total: ${formatoCOP(f.total)} · <b class="text-amber-800">Pendiente: ${formatoCOP(f.saldo)}</b></p></div><button onclick="fiadosController.abrirPago('${f.id}')" class="rounded-xl bg-emerald-700 text-white px-4 py-2.5 text-xs font-bold">Registrar pago / abono</button></div>`).join(''):'<p class="text-xs text-stone-400">No hay fiados pendientes. ¡Todo está al día!</p>';
             },
             abrirPago(id) {
                 const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
-                abrirModalGeneral('Registrar pago de fiado', `<form onsubmit="fiadosController.confirmarPago(event,'${f.id}')" class="space-y-3"><p class="text-sm">Amigo ${f.amigo} · Saldo pendiente: <b>${formatoCOP(f.saldo)}</b></p><label class="block text-xs font-bold">Valor recibido (COP)<input id="fiado-pago-valor" type="number" min="1" max="${Number(f.saldo)}" step="1" required value="${Number(f.saldo)}" class="mt-1 w-full rounded-xl border px-3 py-3"></label><label class="block text-xs font-bold">Registrar ingreso en<select id="fiado-pago-caja" class="mt-1 w-full rounded-xl border px-3 py-3">${Array.from({length:8},(_,i)=>`<option value="${i+1}">Caja ${i+1}</option>`).join('')}</select></label><label class="block text-xs font-bold">Método de pago<select id="fiado-pago-metodo" class="mt-1 w-full rounded-xl border px-3 py-3"><option>Efectivo</option><option>Tarjeta</option><option>QR</option></select></label><div class="flex gap-2"><button type="button" onclick="cerrarModalGeneral()" class="flex-1 rounded-xl border py-3 text-xs font-bold">Cancelar</button><button class="flex-1 rounded-xl bg-emerald-700 text-white py-3 text-xs font-bold">Guardar pago</button></div></form>`);
+                abrirModalGeneral('Registrar pago de fiado', `<form onsubmit="fiadosController.confirmarPago(event,'${f.id}')" class="space-y-3"><p class="text-sm">Amigo ${f.amigo} · Saldo pendiente: <b>${formatoCOP(f.saldo)}</b></p><label class="block text-xs font-bold">Valor recibido (COP)<input id="fiado-pago-valor" type="number" min="1" max="${Number(f.saldo)}" step="1" required value="${Number(f.saldo)}" class="mt-1 w-full rounded-xl border px-3 py-3"></label><label class="block text-xs font-bold">Registrar ingreso en<select id="fiado-pago-caja" class="mt-1 w-full rounded-xl border px-3 py-3">${configuracionController.cajasHtml()}</select></label><label class="block text-xs font-bold">Método de pago<select id="fiado-pago-metodo" class="mt-1 w-full rounded-xl border px-3 py-3">${configuracionController.metodosPagoHtml()}</select></label><div class="flex gap-2"><button type="button" onclick="cerrarModalGeneral()" class="flex-1 rounded-xl border py-3 text-xs font-bold">Cancelar</button><button class="flex-1 rounded-xl bg-emerald-700 text-white py-3 text-xs font-bold">Guardar pago</button></div></form>`);
             },
             confirmarPago(e,id) {
                 e.preventDefault();const db=sistema.cargarDB(),f=(db.fiados||[]).find(x=>String(x.id)===String(id));if(!f)return;
@@ -1712,7 +1742,8 @@
                         <div><strong class="text-stone-800">${p.nombre}</strong> <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded ml-2 font-bold">${p.rol}</span></div>
                         <div class="flex items-center gap-3">
                             <span class="text-emerald-600 font-bold">${p.estado}</span>
-                            <button onclick="personalController.eliminar(${p.id})" class="cursor-pointer text-stone-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="personalController.editar(${p.id})" title="Editar colaborador" class="cursor-pointer text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="personalController.eliminar(${p.id})" title="Eliminar colaborador" class="cursor-pointer text-stone-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 `).join('');
@@ -1728,18 +1759,13 @@
                             <div>
                                 <label class="block font-bold text-stone-500 uppercase mb-1">Rol Operativo</label>
                                 <select id="form-pers-rol" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                    <option value="Barista Principal">Barista Principal</option>
-                                    <option value="Mesero / Salón">Mesero / Salón</option>
-                                    <option value="Cajero">Cajero</option>
-                                    <option value="Encargado de Turno">Encargado de Turno</option>
+                                    ${configuracionController.simpleOptionsHtml('rolesPersonal')}
                                 </select>
                             </div>
                             <div>
                                 <label class="block font-bold text-stone-500 uppercase mb-1">Estado Turno</label>
                                 <select id="form-pers-estado" class="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
-                                    <option value="En Turno">En Turno</option>
-                                    <option value="Descanso">Descanso</option>
-                                    <option value="Fuera de Turno">Fuera de Turno</option>
+                                    ${configuracionController.simpleOptionsHtml('estadosTurno')}
                                 </select>
                             </div>
                         </div>
@@ -1764,6 +1790,14 @@
                 this.render();
                 alert('Personal fichado y registrado correctamente.');
             },
+            editar(id) {
+                const db=sistema.cargarDB(),p=db.personal.find(x=>String(x.id)===String(id));if(!p)return;
+                const nombre=prompt('Nombre:',p.nombre);if(nombre===null)return;
+                const rol=prompt('Rol operativo:',p.rol);if(rol===null)return;
+                const estado=prompt('Estado del turno:',p.estado);if(estado===null)return;
+                if(!nombre.trim()||!rol.trim()||!estado.trim()){alert('Completa todos los campos.');return;}
+                p.nombre=nombre.trim();p.rol=rol.trim();p.estado=estado.trim();sistema.guardarDB(db);this.render();
+            },
             eliminar(id) {
                 if(confirm('¿Eliminar este registro de personal?')) {
                     let db = sistema.cargarDB();
@@ -1787,20 +1821,20 @@
                 if(en)en.disabled=!!abierto;if(sal)sal.disabled=!abierto;
                 if(en)en.classList.toggle('opacity-40',!!abierto);if(sal)sal.classList.toggle('opacity-40',!abierto);
                 const hist=document.getElementById('asistencia-historial');
-                if(hist)hist.innerHTML=mis.length?mis.slice(0,20).map(a=>`<div class="rounded-xl border border-stone-200 p-3 text-xs flex flex-wrap justify-between gap-2"><b>${a.fecha}</b><span>Entrada: ${a.entradaTexto}</span><span>Salida: ${a.salidaTexto||'Pendiente'}</span></div>`).join(''):'<p class="text-xs text-stone-400">Todavía no tienes registros de asistencia.</p>'
+                if(hist)hist.innerHTML=mis.length?mis.slice(0,20).map(a=>`<div class="rounded-xl border border-stone-200 p-3 text-xs flex flex-wrap justify-between gap-2"><b>${a.fecha}</b><span>Entrada: ${a.entradaTexto}</span><span>Salida: ${a.salidaTexto||'Pendiente por la salida'}</span></div>`).join(''):'<p class="text-xs text-stone-400">Todavía no tienes registros de asistencia.</p>'
             },
             entrada(){
                 const perfil=accesoController.actual;if(!perfil)return;const db=sistema.cargarDB();db.asistencias=db.asistencias||[];
                 if(db.asistencias.some(a=>String(a.email).toLowerCase()===String(perfil.email).toLowerCase()&&!a.salidaISO)){alert('Ya tienes un turno abierto. Registra la salida del turno anterior.');return;}
                 const d=new Date(),fecha=d.toLocaleDateString('es-CO',{timeZone:'America/Bogota'}),texto=d.toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});
-                db.asistencias.push({id:'A-'+Date.now(),email:perfil.email,nombre:perfil.nombre,fecha,entradaISO:d.toISOString(),entradaTexto:texto,salidaISO:null,salidaTexto:null});
+                db.asistencias.push({id:'A-'+Date.now(),email:perfil.email,nombre:perfil.nombre,fecha,entradaISO:d.toISOString(),entradaTexto:texto,entradaNombre:perfil.nombre||perfil.email,salidaISO:null,salidaTexto:null,salidaNombre:null});
                 sistema.guardarDB(db);this.render();alert('Entrada registrada: '+texto);
             },
             salida(){
                 const perfil=accesoController.actual;if(!perfil)return;const db=sistema.cargarDB();db.asistencias=db.asistencias||[];
                 const a=db.asistencias.filter(x=>String(x.email).toLowerCase()===String(perfil.email).toLowerCase()&&!x.salidaISO).sort((x,y)=>String(y.entradaISO).localeCompare(String(x.entradaISO)))[0];
                 if(!a){alert('No tienes una entrada pendiente.');return;}
-                const d=new Date();a.salidaISO=d.toISOString();a.salidaTexto=d.toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});
+                const d=new Date();a.salidaISO=d.toISOString();a.salidaTexto=d.toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'short',timeStyle:'medium'});a.salidaNombre=perfil.nombre||perfil.email;
                 sistema.guardarDB(db);this.render();alert('Salida registrada: '+a.salidaTexto);
             }
         };
@@ -1815,7 +1849,8 @@
                         <div><strong class="text-stone-800">${c.nombre}</strong> <span class="text-stone-500 ml-2">(${c.tel})</span></div>
                         <div class="flex items-center gap-3">
                             <span class="text-amber-600 font-bold">Favorito: ${c.favorito} (${c.visitas} visitas)</span>
-                            <button onclick="crmController.eliminar(${c.id})" class="cursor-pointer text-stone-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="crmController.editar(${c.id})" title="Editar cliente" class="cursor-pointer text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="crmController.eliminar(${c.id})" title="Eliminar cliente" class="cursor-pointer text-stone-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
                 `).join('');
@@ -1858,6 +1893,14 @@
                 cerrarModalGeneral();
                 this.render();
                 alert('Cliente registrado con éxito en CRM.');
+            },
+            editar(id) {
+                const db=sistema.cargarDB(),c=db.crm.find(x=>String(x.id)===String(id));if(!c)return;
+                const nombre=prompt('Nombre del cliente:',c.nombre);if(nombre===null)return;
+                const tel=prompt('Teléfono:',c.tel);if(tel===null)return;
+                const favorito=prompt('Producto favorito:',c.favorito||'');if(favorito===null)return;
+                if(!nombre.trim()||!tel.trim()){alert('Nombre y teléfono son obligatorios.');return;}
+                c.nombre=nombre.trim();c.tel=tel.trim();c.favorito=favorito.trim();sistema.guardarDB(db);this.render();
             },
             eliminar(id) {
                 if(confirm('¿Eliminar este cliente del CRM?')) {
@@ -2016,6 +2059,36 @@
 
 
 
+
+        const configuracionController = {
+            defaults(){return {id:'catalogo-principal',categorias:['Bebidas Calientes','Bebidas Frías','Coctelería','Panadería','Platos Fuertes'],
+                leches:[{nombre:'Leche Entera',extra:0},{nombre:'Leche Deslactosada',extra:0},{nombre:'Leche de Almendras',extra:500},{nombre:'Leche de Avena',extra:500}],
+                azucares:['Normal','Poco Azúcar','Sin Azúcar'],zonas:['Salón Principal','Terraza','Barra'],metodosPago:['Efectivo','Tarjeta','QR'],
+                rolesPersonal:['Barista Principal','Mesero / Salón','Cajero','Encargado de Turno'],estadosTurno:['En Turno','Descanso','Fuera de Turno'],cajas:8,fiados:4};},
+            get(){const db=sistema.cargarDB();db.configuracion=db.configuracion||[];let c=db.configuracion.find(x=>x.id==='catalogo-principal');if(!c){c=this.defaults();db.configuracion.push(c);sistema.guardarDB(db);}return c;},
+            esc(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));},
+            simpleOptionsHtml(key){return (this.get()[key]||[]).map(v=>`<option value="${this.esc(v)}">${this.esc(v)}</option>`).join('');},
+            lechesHtml(){return this.get().leches.map(v=>`<option value="${this.esc(v.nombre)}" data-extra="${Number(v.extra)||0}">${this.esc(v.nombre)}${Number(v.extra)>0?' (+'+formatoCOP(Number(v.extra))+')':' (Estándar)'}</option>`).join('');},
+            destinosHtml(){const c=this.get();return '<optgroup label="Cajas">'+Array.from({length:Math.max(1,Number(c.cajas)||1)},(_,i)=>`<option value="caja:${i+1}">Caja ${i+1}</option>`).join('')+'</optgroup><optgroup label="Fiados a amigos">'+Array.from({length:Math.max(1,Number(c.fiados)||1)},(_,i)=>`<option value="fiado:${i+1}">Fiado · Amigo ${i+1}</option>`).join('')+'</optgroup>';},
+            cajasHtml(){const c=this.get();return Array.from({length:Math.max(1,Number(c.cajas)||1)},(_,i)=>`<option value="${i+1}">Caja ${i+1}</option>`).join('');},
+            metodosPagoHtml(){return this.simpleOptionsHtml('metodosPago');},
+            guardar(c){const db=sistema.cargarDB();db.configuracion=db.configuracion||[];const i=db.configuracion.findIndex(x=>x.id==='catalogo-principal');if(i<0)db.configuracion.push(c);else db.configuracion[i]=c;sistema.guardarDB(db);},
+            abrir(){
+                if(!accesoController.requireAdmin())return;const c=this.get();
+                const grupos=[['categorias','Categorías del menú'],['azucares','Opciones de azúcar'],['zonas','Zonas de mesas'],['metodosPago','Métodos de pago'],['rolesPersonal','Roles del personal'],['estadosTurno','Estados de turno']];
+                const listas=grupos.map(([key,label])=>`<section class="rounded-xl border border-stone-200 p-3"><div class="flex items-center justify-between gap-2 mb-2"><h4 class="font-extrabold text-stone-800">${label}</h4><button type="button" onclick="configuracionController.agregar('${key}')" class="rounded-lg bg-emerald-100 text-emerald-800 px-3 py-1.5 font-bold"><i class="fa-solid fa-plus"></i> Agregar</button></div><div class="space-y-1">${(c[key]||[]).map((v,i)=>`<div class="flex items-center gap-2 bg-stone-50 rounded-lg p-2"><span class="flex-1">${this.esc(v)}</span><button type="button" onclick="configuracionController.editar('${key}',${i})" class="text-blue-600 px-2" title="Editar"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="configuracionController.eliminar('${key}',${i})" class="text-red-600 px-2" title="Eliminar"><i class="fa-solid fa-trash"></i></button></div>`).join('')||'<p class="text-xs text-stone-400">Sin opciones registradas.</p>'}</div></section>`).join('');
+                const leches=`<section class="rounded-xl border border-stone-200 p-3"><div class="flex items-center justify-between mb-2"><h4 class="font-extrabold">Variantes de leche y recargo</h4><button type="button" onclick="configuracionController.agregarLeche()" class="rounded-lg bg-emerald-100 text-emerald-800 px-3 py-1.5 font-bold"><i class="fa-solid fa-plus"></i> Agregar</button></div><div class="space-y-1">${c.leches.map((v,i)=>`<div class="flex items-center gap-2 bg-stone-50 rounded-lg p-2"><span class="flex-1">${this.esc(v.nombre)} · ${formatoCOP(Number(v.extra)||0)}</span><button type="button" onclick="configuracionController.editarLeche(${i})" class="text-blue-600 px-2"><i class="fa-solid fa-pen"></i></button><button type="button" onclick="configuracionController.eliminar('leches',${i})" class="text-red-600 px-2"><i class="fa-solid fa-trash"></i></button></div>`).join('')}</div></section>`;
+                const numeros=`<section class="rounded-xl border border-stone-200 p-3"><h4 class="font-extrabold mb-2">Cajas y cuentas de fiado</h4><div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold">Cantidad de cajas<input id="cfg-cajas" type="number" min="1" max="30" value="${c.cajas}" class="mt-1 w-full border rounded-lg p-2"></label><label class="text-xs font-bold">Cantidad de fiados<input id="cfg-fiados" type="number" min="1" max="50" value="${c.fiados}" class="mt-1 w-full border rounded-lg p-2"></label></div><button onclick="configuracionController.guardarNumeros()" class="mt-3 rounded-lg bg-amber-600 text-white px-3 py-2 font-bold">Guardar cantidades</button></section>`;
+                abrirModalGeneral('Administrar opciones de Brumas Café',`<div class="space-y-3 text-xs"><p class="rounded-lg bg-amber-50 text-amber-900 p-3">Agrega, edita o elimina opciones sin modificar el código. Los cambios quedan guardados y sincronizados.</p>${listas}${leches}${numeros}<div class="flex justify-end"><button onclick="cerrarModalGeneral()" class="rounded-lg bg-stone-800 text-white px-4 py-2 font-bold">Cerrar</button></div></div>`);
+            },
+            agregar(key){const c=this.get(),v=prompt('Escribe la nueva opción:');if(v===null||!v.trim())return;const val=v.trim();if(c[key].some(x=>String(x).toLowerCase()===val.toLowerCase())){alert('Esa opción ya existe.');return;}c[key].push(val);this.guardar(c);this.abrir();posController.renderCategorias();},
+            editar(key,i){const c=this.get(),old=c[key][i],v=prompt('Nuevo nombre:',old);if(v===null||!v.trim())return;const val=v.trim();if(key==='categorias'){const db=sistema.cargarDB();db.productos.forEach(p=>{if(p.categoria===old)p.categoria=val;});sistema.guardarDB(db);}c[key][i]=val;this.guardar(c);this.abrir();posController.renderCategorias();posController.renderGrid();},
+            eliminar(key,i){const c=this.get(),old=key==='leches'?c.leches[i]?.nombre:c[key][i];if(!confirm(`¿Eliminar "${old}"?`))return;if(key==='categorias'){const db=sistema.cargarDB();if(db.productos.some(p=>p.categoria===old)){alert('No se puede eliminar: hay productos asignados. Cambia primero sus categorías.');return;}}c[key].splice(i,1);if(key==='leches'&&!c.leches.length)c.leches.push({nombre:'Leche Entera',extra:0});this.guardar(c);this.abrir();posController.renderCategorias();posController.renderGrid();},
+            agregarLeche(){const nombre=prompt('Nombre de la variante:');if(nombre===null||!nombre.trim())return;const extra=prompt('Recargo adicional en pesos:','0');if(extra===null||!Number.isFinite(Number(extra))||Number(extra)<0){alert('Recargo inválido.');return;}const c=this.get();c.leches.push({nombre:nombre.trim(),extra:Number(extra)});this.guardar(c);this.abrir();},
+            editarLeche(i){const c=this.get(),v=c.leches[i],nombre=prompt('Nombre:',v.nombre);if(nombre===null||!nombre.trim())return;const extra=prompt('Recargo en pesos:',String(v.extra||0));if(extra===null||!Number.isFinite(Number(extra))||Number(extra)<0){alert('Recargo inválido.');return;}c.leches[i]={nombre:nombre.trim(),extra:Number(extra)};this.guardar(c);this.abrir();},
+            guardarNumeros(){const c=this.get(),cajas=Number(document.getElementById('cfg-cajas').value),fiados=Number(document.getElementById('cfg-fiados').value);if(!Number.isInteger(cajas)||cajas<1||cajas>30||!Number.isInteger(fiados)||fiados<1||fiados>50){alert('Cantidades no válidas.');return;}c.cajas=cajas;c.fiados=fiados;this.guardar(c);const sel=document.getElementById('pos-destino-select');if(sel)sel.innerHTML=this.destinosHtml();alert('Cantidades guardadas.');this.abrir();}
+        };
+
         const accesoController = {
             actual: null,
             permisosEmpleadoBase: ['pos','mesas','asistencia'],
@@ -2045,6 +2118,8 @@
                 if(badge)badge.textContent=`${email} · ${perfil.rol==='admin'?'Administrador':'Empleado'}`;
             },
             aplicar() {
+                const adminOptions=document.getElementById('brumas-admin-options');
+                if(adminOptions)adminOptions.classList.toggle('hidden',!this.esAdmin());
                 document.querySelectorAll('#brumas-sidebar .nav-btn').forEach(btn=>{
                     const vista=btn.id.replace('nav-',''),permitido=this.puede(vista);
                     btn.dataset.originalHtml=btn.dataset.originalHtml||btn.innerHTML;
@@ -2067,7 +2142,7 @@
                 const asistenciaHost=document.getElementById('admin-asistencias'),dbAsis=sistema.cargarDB();
                 if(asistenciaHost){
                     const filas=(dbAsis.asistencias||[]).slice().sort((a,b)=>String(b.entradaISO||'').localeCompare(String(a.entradaISO||'')));
-                    asistenciaHost.innerHTML=filas.length?`<table class="w-full text-left text-xs"><thead><tr class="border-b text-stone-500"><th class="p-2">Empleado</th><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th></tr></thead><tbody>${filas.map(a=>`<tr class="border-b border-stone-100"><td class="p-2 font-semibold">${a.nombre||a.email||'Empleado'}</td><td class="p-2">${a.fecha||''}</td><td class="p-2">${a.entradaTexto||'—'}</td><td class="p-2">${a.salidaTexto||'Turno activo'}</td></tr>`).join('')}</tbody></table>`:'<p class="text-xs text-stone-400">Todavía no hay registros de asistencia.</p>';
+                    asistenciaHost.innerHTML=filas.length?`<table class="w-full text-left text-xs"><thead><tr class="border-b text-stone-500"><th class="p-2">Empleado</th><th class="p-2">Fecha</th><th class="p-2">Entrada · registrada por</th><th class="p-2">Salida · registrada por</th><th class="p-2">Estado</th></tr></thead><tbody>${filas.map(a=>`<tr class="border-b border-stone-100"><td class="p-2 font-semibold">${a.nombre||a.email||'Empleado'}</td><td class="p-2">${a.fecha||''}</td><td class="p-2"><div>${a.entradaTexto||'—'}</div><div class="text-[10px] text-stone-500">${a.entradaNombre||a.nombre||a.email||'—'}</div></td><td class="p-2"><div>${a.salidaTexto||'—'}</div><div class="text-[10px] text-stone-500">${a.salidaNombre|| (a.salidaISO?'Nombre no disponible':'—')}</div></td><td class="p-2">${a.salidaISO?'<span class="text-emerald-700 font-bold">Salida registrada</span>':'<span class="text-amber-700 font-bold">Pendiente por la salida</span>'}</td></tr>`).join('')}</tbody></table>`:'<p class="text-xs text-stone-400">Todavía no hay registros de asistencia.</p>';
                 }
             },
             async agregarEmpleado(e) {
