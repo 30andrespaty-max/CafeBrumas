@@ -1042,10 +1042,12 @@
                 if (!select) return;
                 const db = sistema.cargarDB();
                 const selected = select.value;
+                const mesasOrdenadas = mesasController.ordenarMesasPorEstado(db);
                 select.innerHTML = '<option value="">Selecciona una mesa</option>' +
-                    db.mesas.map(m => {
+                    mesasOrdenadas.map(m => {
                         const pedido = (db.pedidos || []).find(p => String(p.mesaId) === String(m.id) && p.estado === 'Abierta');
-                        const etiqueta = `${m.numero} · ${m.estado || (pedido ? 'Ocupada' : 'Libre')}${pedido ? ' · Cuenta abierta' : ''}`;
+                        const estado = m.estado || (pedido ? 'Ocupada' : 'Libre');
+                        const etiqueta = `${m.numero} · ${estado}${pedido ? ' · Cuenta abierta' : ''}`;
                         return `<option value="${m.id}">${etiqueta}</option>`;
                     }).join('');
                 if (selected && db.mesas.some(m => String(m.id) === selected)) select.value = selected;
@@ -1318,11 +1320,22 @@ La cuenta queda abierta; todavía no se ha cobrado.`);
             pedidoAbierto(db, mesaId) {
                 return (db.pedidos || []).find(p => String(p.mesaId) === String(mesaId) && p.estado === 'Abierta');
             },
+            ordenarMesasPorEstado(db) {
+                // Orden visual único para el tablero y el selector de Caja digital.
+                // Verde: Libre, azul: Cuenta pedida, amarillo: Esperando pedido, rojo: Ocupada.
+                const prioridad = { 'Libre': 0, 'Cuenta pedida': 1, 'Esperando pedido': 2, 'Ocupada': 3 };
+                return (db.mesas || []).map((mesa, indice) => {
+                    const pedido = this.pedidoAbierto(db, mesa.id);
+                    const estado = mesa.estado || (pedido ? 'Ocupada' : 'Libre');
+                    return { mesa, indice, prioridad: prioridad[estado] ?? 4 };
+                }).sort((a, b) => a.prioridad - b.prioridad || a.indice - b.indice).map(x => x.mesa);
+            },
             render() {
                 const db = sistema.cargarDB();
                 db.pedidos = db.pedidos || [];
                 const grid = document.getElementById('mesas-grid');
-                grid.innerHTML = db.mesas.map(m => {
+                const mesasOrdenadas = this.ordenarMesasPorEstado(db);
+                grid.innerHTML = mesasOrdenadas.map(m => {
                     const pedido = this.pedidoAbierto(db, m.id);
                     const estado = m.estado || (pedido ? 'Ocupada' : 'Libre');
                     let colorClase = 'bg-emerald-50 border-emerald-200 text-emerald-800';
