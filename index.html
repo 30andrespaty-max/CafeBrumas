@@ -2088,7 +2088,20 @@
                     db.perfiles.push({id:email,email,nombre,rol:'empleado',permisos,creadoEn:new Date().toISOString()});
                     sistema.guardarDB(db);e.target.reset();this.render();
                     alert('Usuario creado correctamente. Ya puede ingresar con su correo y contraseña.');
-                }catch(err){console.error(err);alert('No se pudo crear la cuenta. Verifica que esté instalada la función segura crear-empleado en Supabase. Detalle: '+(err.message||err));}
+                }catch(err){
+                    console.error('Error detallado creando empleado:',err);
+                    let detalle=err?.message||'Error desconocido';
+                    try{
+                        if(err?.context && typeof err.context.json==='function'){
+                            const respuesta=await err.context.json();
+                            detalle=respuesta?.error||respuesta?.message||detalle;
+                        }else if(err?.context && typeof err.context.text==='function'){
+                            const texto=await err.context.text();
+                            if(texto)detalle=texto;
+                        }
+                    }catch(parseError){console.warn('No se pudo leer la respuesta de crear-empleado:',parseError);}
+                    alert('No se pudo crear el empleado. Motivo informado por Supabase: '+detalle);
+                }
             },
             cambiarPermiso(token,permiso,habilitado) {
                 if(!this.requireAdmin())return;
