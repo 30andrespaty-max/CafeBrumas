@@ -117,6 +117,104 @@
             #brumas-sidebar { flex-shrink: 0; }
             #mobile-nav-toggle { display: none !important; }
         }
+
+        /* RESPONSIVE UNIVERSAL: evita que formularios, listas y acciones queden cortados */
+        html { scroll-behavior: smooth; }
+        body { min-width: 320px; }
+        #app, #app main, #app main > div { min-width: 0; }
+        #app main > div.flex-1 { overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+        .view-section { min-width: 0; min-height: min-content; }
+        #app main button, #app main a, #app main input, #app main select { touch-action: manipulation; }
+        #app main button { min-height: 36px; }
+        #dynamic-modal {
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            align-items: flex-start;
+        }
+        #dynamic-modal > div {
+            max-height: calc(100dvh - 32px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            margin: auto;
+        }
+        @media (max-width: 767px) {
+            /* En móvil se desplaza la página completa, no un panel interno pequeño. */
+            html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+            body { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+            #app {
+                display: flex;
+                flex-direction: row;
+                height: auto !important;
+                min-height: 100dvh;
+                overflow: visible !important;
+                align-items: stretch;
+            }
+            #app > main {
+                height: auto !important;
+                min-height: 100dvh;
+                overflow: visible !important;
+                flex: 1 1 0%;
+            }
+            #app main > header { position: sticky; top: 0; z-index: 40; }
+            #app main > div.flex-1 {
+                height: auto !important;
+                min-height: calc(100dvh - 58px);
+                flex: none !important;
+                overflow: visible !important;
+                padding: 14px 12px calc(48px + env(safe-area-inset-bottom)) !important;
+                scrollbar-gutter: auto;
+            }
+            #app main .overflow-y-auto:not(#pos-cart-items) {
+                max-height: none !important;
+                overflow-y: visible !important;
+            }
+            #app main #pos-grid {
+                min-height: 220px;
+                max-height: none !important;
+                overflow: visible !important;
+                padding-bottom: 18px;
+            }
+            #app main #pos-cart-items {
+                max-height: 38vh;
+                min-height: 90px;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            #app main .overflow-x-auto { overflow-x: auto !important; overflow-y: visible; -webkit-overflow-scrolling: touch; }
+            #app main table { min-width: 620px; }
+            #app main .flex-1 { min-height: min-content; }
+            #dynamic-modal {
+                position: fixed;
+                inset: 0;
+                padding: max(10px, env(safe-area-inset-top)) 10px max(18px, env(safe-area-inset-bottom));
+                align-items: flex-start;
+                justify-content: center;
+            }
+            #dynamic-modal > div {
+                width: 100%;
+                max-width: 560px;
+                max-height: calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                margin: 0 auto;
+                padding: 16px;
+            }
+            #brumas-cloud-status { bottom: max(12px, env(safe-area-inset-bottom)); }
+        }
+        @media (min-width: 768px) {
+            #app { height: 100dvh; min-height: 100dvh; }
+            #app > main { height: 100dvh; min-height: 0; overflow: hidden; }
+            #app main > div.flex-1 { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 48px; }
+            #dynamic-modal { padding: 20px; }
+            #dynamic-modal > div { width: min(100%, 760px); max-height: calc(100dvh - 40px); }
+        }
+        @media (max-width: 420px) {
+            #app main > header { flex-wrap: wrap; }
+            #app main > header > div:last-child { max-width: 100%; }
+            #app main > div.flex-1 { padding-left: 9px !important; padding-right: 9px !important; }
+            #app main .grid { gap: 10px; }
+            #app main button { min-height: 40px; }
+        }
     </style>
 </head>
 <body class="bg-stone-100 font-sans text-stone-800 antialiased selection:bg-amber-500 selection:text-white">
