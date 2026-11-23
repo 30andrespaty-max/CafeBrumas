@@ -2358,6 +2358,32 @@ La cuenta queda abierta; todavía no se ha cobrado.`);
             });
         }
 
+        // Limpieza única de registros de demostración para iniciar la operación real.
+        // Se conservan menú, mesas, usuarios, permisos, configuración y guías de ejemplo.
+        async function reiniciarRegistrosInicialesSiHaceFalta(){
+          const VERSION='brumas-inicio-limpio-v1';
+          const db=sistema.cargarDB();
+          db.configuracion=db.configuracion||[];
+          if(db.configuracion.some(x=>x&&x.id===VERSION))return;
+          const coleccionesAReiniciar=['ventas','pedidos','kds','mermas','crm','problemas','arqueos','cierresCaja','asistencias','fiados'];
+          // Primero se limpian los registros compartidos en la nube para que todos
+          // los dispositivos comiencen con el mismo historial vacío.
+          for(const coleccion of coleccionesAReiniciar){
+            const {error}=await brumasSync.client.from('brumas_registros').delete().eq('coleccion',coleccion);
+            if(error)throw error;
+          }
+          const marca={id:VERSION,descripcion:'Limpieza inicial de registros de demostración'};
+          const {error:marcaError}=await brumasSync.client.from('brumas_registros').upsert({
+            coleccion:'configuracion',registro_id:VERSION,datos:marca,updated_by:brumasSync.user.id
+          },{onConflict:'coleccion,registro_id'});
+          if(marcaError)throw marcaError;
+          coleccionesAReiniciar.forEach(c=>db[c]=[]);
+          db.configuracion=db.configuracion.filter(x=>!x||x.id!==VERSION);
+          db.configuracion.push(marca);
+          brumasSync.writeLocal(db);
+          BRUMAS_COLLECTIONS.forEach(c=>{brumasSync.baseline[c]=brumasSync.clone(db[c]||[]);});
+        }
+
         const BRUMAS_SUPABASE_URL='https://frkhmdbudrxyafxptvte.supabase.co';
         const BRUMAS_SUPABASE_ANON_KEY='sb_publishable_mcnoEBFLqpmsUYguU_KTXg_4_af-xDf';
         async function iniciarBrumasNube(){
@@ -2377,6 +2403,7 @@ La cuenta queda abierta; todavía no se ha cobrado.`);
               document.getElementById('app').classList.add('hidden');
               brumasSync.status('Cargando datos...');
               await brumasSync.start(user);
+              await reiniciarRegistrosInicialesSiHaceFalta();
               accesoController.iniciar(user);
               protegerAccionesProducto();
               document.getElementById('app').classList.remove('hidden');
